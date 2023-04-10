@@ -114,27 +114,26 @@ function ThreeScene({ cameraStatus, setCamera }) {
         let previousPoint2 = { x: 0, y: 0, d: 0 }
         let previousPoint = { x: 0, y: 0, d: 0 }
         let vertices = []
+        let vertices2 = []
         let measureVertices = true
+        let lastIntersectionLength = 0
+        let intersectionControl = false
         let angleChange = Math.PI / 270
+        let pointIndex = 0
         const cameraPoints = [
-            {x: -1.5, y: 1, z: -2},
+            { x: 4, y: 1, z: 4 },
+            /*{ x: -1.5, y: 1, z: -2 },
             {x: -1.5, y: 1, z: 0},
             {x: -1.5, y: 1, z: 2},
             {x: 0.5, y: 1, z: -2},
             {x: 0.5, y: 1, z: 2},
             {x: 2.5, y: 1, z: -2},
             {x: 2.5, y: 1, z: 0},
-            {x: 2.5, y: 1, z: 2},
+            {x: 2.5, y: 1, z: 2},*/
         ]
 
         function distance(p1, p2) {
             return Math.sqrt((p1.x - p2.x) ** 2 + (p1.z - p2.z) ** 2)
-        }
-        function getAngle(x1, y1, x2, y2) {
-            const dx = x2 - x1;
-            const dy = y2 - y1;
-            const angle = Math.atan2(dy, dx) * 180 / Math.PI;
-            return angle;
         }
         function samePlane(point1, point2, point3) {
             let xCoordinates = [point1.x, point2.x, point3.x].sort()
@@ -150,41 +149,59 @@ function ThreeScene({ cameraStatus, setCamera }) {
             return false;
         }
 
-        //let intersectionCount = 1
-        //let closestPoint = { x: 0, y: 0, d: 0 }
         function animate() {
-
             requestAnimationFrame(animate);
             camera.rotation.y += angleChange
 
             setCamera({ x: camera.position.x, y: camera.position.y, z: camera.position.z, target: { x: controls.target.x, y: controls.target.y, z: controls.target.z } })
             raycaster.setFromCamera(pointer, camera);
             const intersects = raycaster.intersectObjects(scene.children, false);
-            // const farthestObject = intersects.length-1
+            if ((intersects.length === 0 && lastIntersectionLength > 0 || intersects.length > 0 && lastIntersectionLength === 0)&&intersectionControl) {
+                lastIntersectionLength = intersects.length
+                const rightArray = pointIndex === 0 ? vertices : vertices2
+                if (intersects.length > 0) {
+                    const currentPoint = { d: intersects[0].distance, x: intersects[0].point.x, z: intersects[0].point.z }
+                    rightArray.push(currentPoint)
+                }
+                else{
+                    rightArray.push(previousPoint)
+                }
+            }
+            if(intersects.length!==lastIntersectionLength){
+                lastIntersectionLength = intersects.length
+                intersectionControl = true
+                console.log(lastIntersectionLength)
+            }
+            //console.log(lastIntersectionLength)
             if (intersects.length > 0 && measureVertices) {
-                // 0 --> farthestObject
+                const rightArray = pointIndex === 0 ? vertices : vertices2
                 const currentPoint = { d: intersects[0].distance, x: intersects[0].point.x, z: intersects[0].point.z }
-                /*if(farthestObject>intersectionCount){
-                    vertices.push(currentPoint)
-                    intersectionCount = farthestObject
-                }
-                if(farthestObject<intersectionCount){
-                    vertices.push(closestPoint)
-                }
-                if(intersectionCount>1){
-                    // Fazer iterável/expandível para arrays
-                    closestPoint = { d: intersects[0].distance, x: intersects[0].point.x, z: intersects[0].point.z }
-                }*/
                 if ((previousPoint.d > currentPoint.d && previousPoint.d > previousPoint2.d) || (previousPoint.d < currentPoint.d && previousPoint.d < previousPoint2.d && !samePlane(previousPoint2, previousPoint, currentPoint))) {
-                    if (!vertices.length || distance(vertices[0], currentPoint) > 0.025) {
-                        vertices.push(currentPoint)
+                    if (!rightArray.length || distance(rightArray[0], currentPoint) > 0.025) {
+                        rightArray.push(currentPoint)
                     }
+                    /*else if (pointIndex === 0) {
+                        pointIndex++
+                        previousPoint = { x: 0, y: 0, d: 0 }
+                        previousPoint2 = { x: 0, y: 0, d: 0 }
+                        camera.position.x = cameraPoints[0].x
+                        camera.position.y = cameraPoints[0].y
+                        camera.position.z = cameraPoints[0].z
+                        controls.target = new THREE.Vector3(cameraStatus.target.x, cameraStatus.target.y, cameraStatus.target.z);
+                    }*/
                     else {
-                        console.log(vertices)
+                        console.log(vertices, vertices2)
                         measureVertices = false
                         angleChange = 0
                         vertices.forEach(vertice => {
-                            const coordinateMarker = new THREE.Mesh(new THREE.BoxGeometry(0.25, 2.1, 0.25), new THREE.MeshStandardMaterial({ transparent: true, color: '#00ff00' }))
+                            const coordinateMarker = new THREE.Mesh(new THREE.BoxGeometry(0.25, 2.1, 0.25), new THREE.MeshStandardMaterial({ transparent: true, opacity: 0.75, color: '#00ff00' }))
+                            coordinateMarker.position.y = 1.05
+                            coordinateMarker.position.x = vertice.x
+                            coordinateMarker.position.z = vertice.z
+                            scene.add(coordinateMarker)
+                        })
+                        vertices2.forEach(vertice => {
+                            const coordinateMarker = new THREE.Mesh(new THREE.BoxGeometry(0.25, 2.1, 0.25), new THREE.MeshStandardMaterial({ transparent: true, opacity: 0.75, color: '#ff0000' }))
                             coordinateMarker.position.y = 1.05
                             coordinateMarker.position.x = vertice.x
                             coordinateMarker.position.z = vertice.z
