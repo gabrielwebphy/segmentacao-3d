@@ -106,29 +106,35 @@ function ThreeScene({ cameraStatus, setCamera }) {
         camera.position.x = cameraStatus.x
         camera.position.y = cameraStatus.y
         camera.position.z = cameraStatus.z
+        camera.rotation.y = Math.PI / 2
 
         controls.target = new THREE.Vector3(cameraStatus.target.x, cameraStatus.target.y, cameraStatus.target.z);
         controls.update();
 
-        let cameraGridPoints = []
-        for (let i = 0; i < 50; i++) {
-            let innerArray = []
-            let zCoordinate = (i - 25) / 2
-            for (let x = 0; x < 50; x++) {
-                innerArray.push({ z: zCoordinate, x: (x - 25) / 2 })
-            }
-            cameraGridPoints.push(innerArray)
-        }
-
         let previousPoint2 = { x: 0, y: 0, d: 0 }
         let previousPoint = { x: 0, y: 0, d: 0 }
         let vertices = []
-        let measureVertices = false
-        let firstRender = true
-        let angleChange = 0//Math.PI / 270
+        let measureVertices = true
+        let angleChange = Math.PI / 270
+        const cameraPoints = [
+            {x: -1.5, y: 1, z: -2},
+            {x: -1.5, y: 1, z: 0},
+            {x: -1.5, y: 1, z: 2},
+            {x: 0.5, y: 1, z: -2},
+            {x: 0.5, y: 1, z: 2},
+            {x: 2.5, y: 1, z: -2},
+            {x: 2.5, y: 1, z: 0},
+            {x: 2.5, y: 1, z: 2},
+        ]
 
         function distance(p1, p2) {
             return Math.sqrt((p1.x - p2.x) ** 2 + (p1.z - p2.z) ** 2)
+        }
+        function getAngle(x1, y1, x2, y2) {
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+            const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+            return angle;
         }
         function samePlane(point1, point2, point3) {
             let xCoordinates = [point1.x, point2.x, point3.x].sort()
@@ -143,43 +149,10 @@ function ThreeScene({ cameraStatus, setCamera }) {
 
             return false;
         }
-        //const newRaycaster = new THREE.Raycaster();
-        //const direction = new THREE.Vector3(1, 0, 0);
 
+        //let intersectionCount = 1
+        //let closestPoint = { x: 0, y: 0, d: 0 }
         function animate() {
-            if (firstRender) {
-                const deletedPoints = []
-                firstRender = false
-                cameraGridPoints.forEach((row, i) => {
-                    row.forEach((cell, j) => {
-                        const newRaycaster = new THREE.Raycaster();
-                        const direction = new THREE.Vector3(0, 0, 1);
-                        const raycasterPosition = new THREE.Vector3(cell.x, 1, cell.z)
-                        newRaycaster.set(raycasterPosition, direction);
-                        const intersects = newRaycaster.intersectObject(wall);
-                        //console.log(intersects)
-                        if (intersects.length > 0) {
-                            console.log('foi', i, j)
-                        }
-                        else {
-                            deletedPoints.unshift({ row: i, col: j })
-                        }
-                    })
-                })
-                console.log(deletedPoints)
-                deletedPoints.forEach(point => {
-                    cameraGridPoints[point.row].splice(point.col, 1)
-                })
-                cameraGridPoints.forEach(row => {
-                    row.forEach(cell => {
-                        const square = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.1), new THREE.MeshStandardMaterial({ color: '#ff00ff' }))
-                        square.position.x = cell.x
-                        square.position.z = cell.z
-                        square.position.y = 0.15
-                        scene.add(square)
-                    })
-                })
-            }
 
             requestAnimationFrame(animate);
             camera.rotation.y += angleChange
@@ -187,8 +160,21 @@ function ThreeScene({ cameraStatus, setCamera }) {
             setCamera({ x: camera.position.x, y: camera.position.y, z: camera.position.z, target: { x: controls.target.x, y: controls.target.y, z: controls.target.z } })
             raycaster.setFromCamera(pointer, camera);
             const intersects = raycaster.intersectObjects(scene.children, false);
+            // const farthestObject = intersects.length-1
             if (intersects.length > 0 && measureVertices) {
+                // 0 --> farthestObject
                 const currentPoint = { d: intersects[0].distance, x: intersects[0].point.x, z: intersects[0].point.z }
+                /*if(farthestObject>intersectionCount){
+                    vertices.push(currentPoint)
+                    intersectionCount = farthestObject
+                }
+                if(farthestObject<intersectionCount){
+                    vertices.push(closestPoint)
+                }
+                if(intersectionCount>1){
+                    // Fazer iterável/expandível para arrays
+                    closestPoint = { d: intersects[0].distance, x: intersects[0].point.x, z: intersects[0].point.z }
+                }*/
                 if ((previousPoint.d > currentPoint.d && previousPoint.d > previousPoint2.d) || (previousPoint.d < currentPoint.d && previousPoint.d < previousPoint2.d && !samePlane(previousPoint2, previousPoint, currentPoint))) {
                     if (!vertices.length || distance(vertices[0], currentPoint) > 0.025) {
                         vertices.push(currentPoint)
