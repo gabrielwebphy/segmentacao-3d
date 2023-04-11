@@ -39,8 +39,9 @@ function dividePolygon(poly, rows, cols) {
             const intersection = turf.intersect(polygon, cell_box);
             // Add cell to list of rectangles
             if (intersection !== null && intersection.geometry.type === 'Polygon' && intersection.geometry.coordinates[0].length > 2) {
+                const area = turf.area(intersection); // projeção diferente, a medidda vai estar exagerada
                 if (x1 >= min_x && y1 >= min_y && x2 <= max_x && y2 <= max_y) {
-                    rects.push({ x: x1.toFixed(3), y: y1.toFixed(3), width: cell_width.toFixed(3), height: cell_height.toFixed(3) });
+                    rects.push({ x: x1.toFixed(3), y: y1.toFixed(3), width: cell_width.toFixed(3), height: cell_height.toFixed(3), area: area.toFixed(3) });
                 } else {
                     // Calculate intersection between cell and polygon
                     const x3 = Math.max(x1, min_x);
@@ -49,7 +50,7 @@ function dividePolygon(poly, rows, cols) {
                     const y4 = Math.min(y2, max_y);
                     const width = x4 - x3;
                     const height = y4 - y3;
-                    rects.push({ x: x3.toFixed(3), y: y3.toFixed(3), width: width.toFixed(3), height: height.toFixed(3) });
+                    rects.push({ x: x3.toFixed(3), y: y3.toFixed(3), width: width.toFixed(3), height: height.toFixed(3), area: area.toFixed(3) });
                 }
             }
         }
@@ -188,12 +189,12 @@ function ThreeScene({ cameraStatus, setCamera }) {
                 const currentPoint = { x: intersects[0].point.x, y: intersects[0].point.z }
                 vertices.push(currentPoint)
                 verticeCount++
-                if (verticeCount >= 1/(angleChange/Math.PI)*2) {
+                if (verticeCount >= 1 / (angleChange / Math.PI) * 2) {
                     measureVertices = false
                     angleChange = 0
                     vertices.push(vertices[0])
                     const allSquares = dividePolygon(vertices, 9, 9)
-                    console.log(allSquares.length);
+                    console.log(allSquares.length, allSquares);
                     allSquares.forEach((square, index) => {
                         const newSquare = new THREE.Mesh(new THREE.BoxGeometry(parseFloat(square.width) * 0.975, 0.25, parseFloat(square.height) * 0.975), new THREE.MeshStandardMaterial({ color: '#00ff00' }))
                         newSquare.position.x = parseFloat(square.x) + parseFloat(square.width) / 2
