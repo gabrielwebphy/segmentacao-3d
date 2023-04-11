@@ -98,7 +98,7 @@ function ThreeScene({ cameraStatus, setCamera }) {
 
         const roof = new THREE.Mesh(new THREE.BoxGeometry(20, 0.2, 20), new THREE.MeshStandardMaterial({ color: '#ffffff' }))
         roof.position.y = 6
-        scene.add(roof)
+        //scene.add(roof)
         const floor = new THREE.Mesh(new THREE.BoxGeometry(20, 0.2, 20), new THREE.MeshStandardMaterial({ color: '#ffffff' }))
         floor.position.y = 0
         scene.add(floor)
@@ -111,44 +111,17 @@ function ThreeScene({ cameraStatus, setCamera }) {
         controls.target = new THREE.Vector3(cameraStatus.target.x, cameraStatus.target.y, cameraStatus.target.z);
         controls.update();
 
-        let previousPoint2 = { x: 0, y: 0, d: 0 }
-        let previousPoint = { x: 0, y: 0, d: 0 }
         let vertices = []
-        let vertices2 = []
+        let verticeCount = 0
         let measureVertices = true
-        let lastIntersectionLength = 0
-        let intersectionControl = false
-        let angleChange = Math.PI / 270
-        let pointIndex = 0
-        const cameraPoints = [
-            { x: 4, y: 1, z: 4 },
-            /*{ x: -1.5, y: 1, z: -2 },
-            {x: -1.5, y: 1, z: 0},
-            {x: -1.5, y: 1, z: 2},
-            {x: 0.5, y: 1, z: -2},
-            {x: 0.5, y: 1, z: 2},
-            {x: 2.5, y: 1, z: -2},
-            {x: 2.5, y: 1, z: 0},
-            {x: 2.5, y: 1, z: 2},*/
-        ]
-
-        function distance(p1, p2) {
-            return Math.sqrt((p1.x - p2.x) ** 2 + (p1.z - p2.z) ** 2)
-        }
-        function samePlane(point1, point2, point3) {
-            let xCoordinates = [point1.x, point2.x, point3.x].sort()
-            if (xCoordinates[0] === xCoordinates[2]) { return true }
-
-            let zCoordinates = [point1.z, point2.z, point3.z].sort()
-            if (zCoordinates[0] === zCoordinates[2]) { return true }
-
-            // Seria bom ter uma margem de erro, tratando a linha entre os pontos como uma função, e aumentando
-            // e diminuindo a altura da função, e checando se o resultado é maior e menor, sendo assim ele estaria dentro.
-            if (point2.x === point1.x + point3.x / 2 && point2.z === point1.z + point3.z / 2) { return true }
-
-            return false;
-        }
-
+        let angleChange = Math.PI / 180
+        let allSquares = [{x: -0.967, y: -2.9, 'width': 0.644, 'height': 0.644}, {'x': -0.322, 'y': -2.9, 'width': 0.644, 'height': 0.644}, {'x': 0.322, 'y': -2.9, 'width': 0.644, 'height': 0.644}, {'x': -0.967, 'y': -2.256, 'width': 0.644, 'height': 0.644}, {'x': -0.322, 'y': -2.256, 'width': 0.644, 'height': 0.644}, {'x': 0.322, 'y': -2.256, 'width': 0.644, 'height': 0.644}, {'x': -0.967, 'y': -1.611, 'width': 0.644, 'height': 0.644}, {'x': -0.322, 'y': -1.611, 'width': 0.644, 'height': 0.644}, {'x': 0.322, 'y': -1.611, 'width': 0.644, 'height': 0.644}, {'x': -2.9, 'y': -0.967, 'width': 0.644, 'height': 0.644}, {'x': -2.256, 'y': -0.967, 'width': 0.644, 'height': 0.644}, {'x': -1.611, 'y': -0.967, 'width': 0.644, 'height': 0.644}, {'x': -0.967, 'y': -0.967, 'width': 0.644, 'height': 0.644}, {'x': -0.322, 'y': -0.967, 'width': 0.644, 'height': 0.644}, {'x': 0.322, 'y': -0.967, 'width': 0.644, 'height': 0.644}, {'x': 0.967, 'y': -0.967, 'width': 0.644, 'height': 0.644}, {'x': 1.611, 'y': -0.967, 'width': 0.644, 'height': 0.644}, {'x': 2.256, 'y': -0.967, 'width': 0.644, 'height': 0.644}, {'x': -2.9, 'y': -0.322, 'width': 0.644, 'height': 0.644}, {'x': -2.256, 'y': -0.322, 'width': 0.644, 'height': 0.644}, {'x': -1.611, 'y': -0.322, 'width': 0.644, 'height': 0.644}, {'x': -0.967, 'y': -0.322, 'width': 0.644, 'height': 0.644}, {'x': -0.322, 'y': -0.322, 'width': 0.644, 'height': 0.644}, {'x': 0.322, 'y': -0.322, 'width': 0.644, 'height': 0.644}, {'x': 0.967, 'y': -0.322, 'width': 0.644, 'height': 0.644}, {'x': 1.611, 'y': -0.322, 'width': 0.644, 'height': 0.644}, {'x': 2.256, 'y': -0.322, 'width': 0.644, 'height': 0.644}, {'x': -2.9, 'y': 0.322, 'width': 0.644, 'height': 0.644}, {'x': -2.256, 'y': 0.322, 'width': 0.644, 'height': 0.644}, {'x': -1.611, 'y': 0.322, 'width': 0.644, 'height': 0.644}, {'x': -0.967, 'y': 0.322, 'width': 0.644, 'height': 0.644}, {'x': -0.322, 'y': 0.322, 'width': 0.644, 'height': 0.644}, {'x': 0.322, 'y': 0.322, 'width': 0.644, 'height': 0.644}, {'x': 0.967, 'y': 0.322, 'width': 0.644, 'height': 0.644}, {'x': 1.611, 'y': 0.322, 'width': 0.644, 'height': 0.644}, {'x': 2.256, 'y': 0.322, 'width': 0.644, 'height': 0.644}, {'x': -2.9, 'y': 0.967, 'width': 0.644, 'height': 0.644}, {'x': -2.256, 'y': 0.967, 'width': 0.644, 'height': 0.644}, {'x': -1.611, 'y': 0.967, 'width': 0.644, 'height': 0.644}, {'x': -0.967, 'y': 0.967, 'width': 0.644, 'height': 0.644}, {'x': -0.322, 'y': 0.967, 'width': 0.644, 'height': 0.644}, {'x': 0.322, 'y': 0.967, 'width': 0.644, 'height': 0.644}, {'x': 0.967, 'y': 0.967, 'width': 0.644, 'height': 0.644}, {'x': 1.611, 'y': 0.967, 'width': 0.644, 'height': 0.644}, {'x': 2.256, 'y': 0.967, 'width': 0.644, 'height': 0.644}, {'x': -2.256, 'y': 1.611, 'width': 0.644, 'height': 0.644}, {'x': -1.611, 'y': 1.611, 'width': 0.644, 'height': 0.644}, {'x': -0.967, 'y': 1.611, 'width': 0.644, 'height': 0.644}, {'x': -0.322, 'y': 1.611, 'width': 0.644, 'height': 0.644}, {'x': 0.322, 'y': 1.611, 'width': 0.644, 'height': 0.644}, {'x': 0.967, 'y': 1.611, 'width': 0.644, 'height': 0.644}, {'x': 1.611, 'y': 1.611, 'width': 0.644, 'height': 0.644}, {'x': 2.256, 'y': 1.611, 'width': 0.644, 'height': 0.644}, {'x': -1.611, 'y': 2.256, 'width': 0.644, 'height': 0.644}, {'x': -0.967, 'y': 2.256, 'width': 0.644, 'height': 0.644}, {'x': -0.322, 'y': 2.256, 'width': 0.644, 'height': 0.644}, {'x': 0.322, 'y': 2.256, 'width': 0.644, 'height': 0.644}, {'x': 0.967, 'y': 2.256, 'width': 0.644, 'height': 0.644}, {'x': 1.611, 'y': 2.256, 'width': 0.644, 'height': 0.644}, {'x': 2.256, 'y': 2.256, 'width': 0.644, 'height': 0.644}]
+        allSquares.forEach((square, index) => {
+            const newSquare = new THREE.Mesh(new THREE.BoxGeometry(square.width*0.975, 0.25, square.height*0.975), new THREE.MeshStandardMaterial({color: '#00ff00'}))
+            newSquare.position.x = square.x+square.width/2 
+            newSquare.position.z = square.y+square.height/2
+            scene.add(newSquare)
+        })
         function animate() {
             requestAnimationFrame(animate);
             camera.rotation.y += angleChange
@@ -156,61 +129,15 @@ function ThreeScene({ cameraStatus, setCamera }) {
             setCamera({ x: camera.position.x, y: camera.position.y, z: camera.position.z, target: { x: controls.target.x, y: controls.target.y, z: controls.target.z } })
             raycaster.setFromCamera(pointer, camera);
             const intersects = raycaster.intersectObjects(scene.children, false);
-            if ((intersects.length === 0 && lastIntersectionLength > 0 || intersects.length > 0 && lastIntersectionLength === 0)&&intersectionControl) {
-                lastIntersectionLength = intersects.length
-                const rightArray = pointIndex === 0 ? vertices : vertices2
-                if (intersects.length > 0) {
-                    const currentPoint = { d: intersects[0].distance, x: intersects[0].point.x, z: intersects[0].point.z }
-                    rightArray.push(currentPoint)
-                }
-                else{
-                    rightArray.push(previousPoint)
-                }
-            }
-            if(intersects.length!==lastIntersectionLength){
-                lastIntersectionLength = intersects.length
-                intersectionControl = true
-                console.log(lastIntersectionLength)
-            }
-            //console.log(lastIntersectionLength)
             if (intersects.length > 0 && measureVertices) {
-                const rightArray = pointIndex === 0 ? vertices : vertices2
-                const currentPoint = { d: intersects[0].distance, x: intersects[0].point.x, z: intersects[0].point.z }
-                if ((previousPoint.d > currentPoint.d && previousPoint.d > previousPoint2.d) || (previousPoint.d < currentPoint.d && previousPoint.d < previousPoint2.d && !samePlane(previousPoint2, previousPoint, currentPoint))) {
-                    if (!rightArray.length || distance(rightArray[0], currentPoint) > 0.025) {
-                        rightArray.push(currentPoint)
-                    }
-                    /*else if (pointIndex === 0) {
-                        pointIndex++
-                        previousPoint = { x: 0, y: 0, d: 0 }
-                        previousPoint2 = { x: 0, y: 0, d: 0 }
-                        camera.position.x = cameraPoints[0].x
-                        camera.position.y = cameraPoints[0].y
-                        camera.position.z = cameraPoints[0].z
-                        controls.target = new THREE.Vector3(cameraStatus.target.x, cameraStatus.target.y, cameraStatus.target.z);
-                    }*/
-                    else {
-                        console.log(vertices, vertices2)
-                        measureVertices = false
-                        angleChange = 0
-                        vertices.forEach(vertice => {
-                            const coordinateMarker = new THREE.Mesh(new THREE.BoxGeometry(0.25, 2.1, 0.25), new THREE.MeshStandardMaterial({ transparent: true, opacity: 0.75, color: '#00ff00' }))
-                            coordinateMarker.position.y = 1.05
-                            coordinateMarker.position.x = vertice.x
-                            coordinateMarker.position.z = vertice.z
-                            scene.add(coordinateMarker)
-                        })
-                        vertices2.forEach(vertice => {
-                            const coordinateMarker = new THREE.Mesh(new THREE.BoxGeometry(0.25, 2.1, 0.25), new THREE.MeshStandardMaterial({ transparent: true, opacity: 0.75, color: '#ff0000' }))
-                            coordinateMarker.position.y = 1.05
-                            coordinateMarker.position.x = vertice.x
-                            coordinateMarker.position.z = vertice.z
-                            scene.add(coordinateMarker)
-                        })
-                    }
+                const currentPoint = { x: intersects[0].point.x, y: intersects[0].point.z }
+                vertices.push(currentPoint)
+                verticeCount++
+                if (verticeCount >= 360) {
+                    measureVertices = false
+                    angleChange = 0
+                    let allVertices = ''
                 }
-                previousPoint2 = previousPoint
-                previousPoint = currentPoint
                 intersects[0].object.material.color.set(0x0000ff)
             }
             renderer.render(scene, camera);
