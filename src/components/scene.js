@@ -2,10 +2,11 @@ import React, { useRef, useEffect } from 'react';
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls"
 //import marmore from '../textures/marmore.jpg'
 import * as THREE from 'three';
-import * as turf from '@turf/turf';
 //import path1 from '@/textures/apart_06.glb'
 import loadModel from './loadModel';
 import { CSG } from 'three-csg-ts'
+import Flatten, {polygon} from '@flatten-js/core';
+let {intersect, disjoint, equal, touch, inside, contain, covered, cover} = Flatten.Relations;
 
 function dividePolygon(poly, rows, cols) {
     // Step 1: Find outer bounds of polygon
@@ -25,8 +26,9 @@ function dividePolygon(poly, rows, cols) {
     const cell_width = (max_x - min_x) / cols;
     const cell_height = (max_y - min_y) / rows;
 
+    const poly1 = polygon([poly.map(p => [p.x, p.y])])
+    console.log(poly1.isValid())
     // Step 3 and 4: Check cells for overlap
-    const polygon = turf.polygon([poly.map(p => [p.x, p.y])]);
     const rects = [];
     for (let row = 0; row < rows; row++) {
         for (let col = 0; col < cols; col++) {
@@ -36,16 +38,11 @@ function dividePolygon(poly, rows, cols) {
             const x2 = x1 + cell_width;
             const y2 = y1 + cell_height;
 
-            const cell_box = turf.bboxPolygon([x1, y1, x2, y2]);
-
-            const intersection = turf.intersect(polygon, cell_box);
-
+            const squareCell = polygon([[x1, y1], [x2, y1], [x2, y2], [x1, y2], [x1, y1]]);
+            const intersects = intersect(squareCell, poly1)
+            console.log(intersects);
             // Add cell to list of rectangles
-            if (intersection !== null && intersection.geometry.type === 'Polygon' && intersection.geometry.coordinates[0].length > 2) {
-                const intersectionPolygon = turf.polygon(intersection.geometry.coordinates);
-                const intersectionArea = turf.area(intersectionPolygon);
-
-                const rectArea = cell_width * cell_height;
+            if (intersects) {
                 if (x1 >= min_x && y1 >= min_y && x2 <= max_x && y2 <= max_y /*&& intersectionArea === rectArea*/) {
                     rects.push({ x: x1.toFixed(3), y: y1.toFixed(3), width: cell_width.toFixed(3), height: cell_height.toFixed(3) });
                 } else {
@@ -57,19 +54,17 @@ function dividePolygon(poly, rows, cols) {
                     const width = x4 - x3;
                     const height = y4 - y3;
                     const area = width * height;
-                    if (intersectionArea === area) {
-                        rects.push({ x: x3.toFixed(3), y: y3.toFixed(3), width: width.toFixed(3), height: height.toFixed(3) });
-                    }
+                    rects.push({ x: x3.toFixed(3), y: y3.toFixed(3), width: width.toFixed(3), height: height.toFixed(3) });
                 }
             }
         }
     }
-
+    console.log(rects);
     return rects;
 }
 //const floorTexture = new THREE.MeshStandardMaterial({ map: new THREE.TextureLoader().load(marmore) })
 
-function ThreeScene({ cameraStatus, setCamera }) {
+function ThreeScene({ cameraStatus, setCamera, model }) {
     const containerRef = useRef(null);
 
     useEffect(() => {
@@ -97,6 +92,8 @@ function ThreeScene({ cameraStatus, setCamera }) {
         scene.add(light3);
         const light = new THREE.AmbientLight(0xffffff, 0.35)
         scene.add(light)
+
+        console.log(model);
 
         const size = 100;
         const divisions = 100;
@@ -190,24 +187,31 @@ function ThreeScene({ cameraStatus, setCamera }) {
             raycaster.setFromCamera(pointer, camera);
             const intersects = raycaster.intersectObjects(scene.children, false);
             if (intersects.length > 0 && measureVertices) {
-
-                const currentPoint = { x: intersects[intersects.length-1].point.x, y: intersects[intersects.length-1].point.z }
+                const currentPoint = { x: intersects[0].point.x, y: intersects[0].point.z }
                 vertices.push(currentPoint)
-
-                //const currentPoint = { x: intersects[0].point.x, y: intersects[0].point.z }
-                //vertices.push(currentPoint)
                 angleCount++
                 if (angleCount >= 1 / (angleChange / Math.PI) * 2) {
-                    console.log(angleCount, vertices.length);
+                    const material = new THREE.LineBasicMaterial({ color: 0x0000ff });
+                    const points = [];
+                    //vertices.push(vertices[0])
+                    vertices.forEach(vertice => {
+                        points.push(new THREE.Vector3(vertice.x, 1, vertice.y));
+                    })
+                    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                    const line = new THREE.Line(geometry, material);
+                    scene.add(line);
+
                     measureVertices = false
                     angleChange = 0
-                    vertices.forEach(vertice => {
-                        const hitbox = new THREE.Mesh(new THREE.BoxGeometry(0.05, 1, 0.05), new THREE.MeshStandardMaterial({ color: '#ff00ff' }))
+                    vertices.forEach((vertice, index) => {
+                        const material  = new THREE.MeshStandardMaterial();
+                        material.color = new THREE.Color(`rgb(${Math.floor(index * 255 / vertices.length)}, 0, 255)`);
+                        const hitbox = new THREE.Mesh(new THREE.BoxGeometry(0.05, 1, 0.05), material)
                         hitbox.position.x = vertice.x
                         hitbox.position.z = vertice.y
                         scene.add(hitbox)
                     })
-                    vertices.push(vertices[0])
+
                     const allSquares = dividePolygon(vertices, 9, 9)
                     allSquares.forEach((square, index) => {
                         const newSquare = new THREE.Mesh(new THREE.BoxGeometry(parseFloat(square.width) * 0.975, 0.25, parseFloat(square.height) * 0.975), new THREE.MeshStandardMaterial({ color: '#00ff00' }))
