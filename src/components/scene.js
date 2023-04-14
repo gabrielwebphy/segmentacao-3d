@@ -5,8 +5,8 @@ import * as THREE from 'three';
 //import path1 from '@/textures/apart_06.glb'
 import loadModel from './loadModel';
 import { CSG } from 'three-csg-ts'
-import Flatten, {polygon} from '@flatten-js/core';
-let {intersect, disjoint, equal, touch, inside, contain, covered, cover} = Flatten.Relations;
+import Flatten, { polygon } from '@flatten-js/core';
+let { intersect, disjoint, equal, touch, inside, contain, covered, cover } = Flatten.Relations;
 
 function dividePolygon(poly, rows, cols) {
     // Step 1: Find outer bounds of polygon
@@ -187,8 +187,10 @@ function ThreeScene({ cameraStatus, setCamera, model }) {
             raycaster.setFromCamera(pointer, camera);
             const intersects = raycaster.intersectObjects(scene.children, false);
             if (intersects.length > 0 && measureVertices) {
-                const currentPoint = { x: intersects[0].point.x, y: intersects[0].point.z }
-                vertices.push(currentPoint)
+                intersects.forEach(intersection => {
+                    const currentPoint = { x: intersection.point.x, y: intersection.point.z }
+                    vertices.push(currentPoint)
+                })
                 angleCount++
                 if (angleCount >= 1 / (angleChange / Math.PI) * 2) {
                     const material = new THREE.LineBasicMaterial({ color: 0x0000ff });
@@ -200,11 +202,11 @@ function ThreeScene({ cameraStatus, setCamera, model }) {
                     const geometry = new THREE.BufferGeometry().setFromPoints(points);
                     const line = new THREE.Line(geometry, material);
                     scene.add(line);
-
+                    vertices.push(vertices[0])
                     measureVertices = false
                     angleChange = 0
                     vertices.forEach((vertice, index) => {
-                        const material  = new THREE.MeshStandardMaterial();
+                        const material = new THREE.MeshStandardMaterial();
                         material.color = new THREE.Color(`rgb(${Math.floor(index * 255 / vertices.length)}, 0, 255)`);
                         const hitbox = new THREE.Mesh(new THREE.BoxGeometry(0.05, 1, 0.05), material)
                         hitbox.position.x = vertice.x
