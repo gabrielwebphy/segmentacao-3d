@@ -5,7 +5,8 @@ import * as THREE from 'three';
 //import path1 from '@/textures/apart_06.glb'
 import loadModel from './loadModel';
 import { CSG } from 'three-csg-ts'
-import Flatten, { polygon } from '@flatten-js/core';
+import Flatten from '@flatten-js/core';
+const { Polygon } = Flatten
 let { intersect, disjoint, equal, touch, inside, contain, covered, cover } = Flatten.Relations;
 
 function dividePolygon(poly, rows, cols) {
@@ -26,7 +27,7 @@ function dividePolygon(poly, rows, cols) {
     const cell_width = (max_x - min_x) / cols;
     const cell_height = (max_y - min_y) / rows;
 
-    const poly1 = polygon([poly.map(p => [p.x, p.y])])
+    const poly1 = new Polygon([poly.map(p => [p.x, p.y])])
     console.log(poly1.isValid())
     // Step 3 and 4: Check cells for overlap
     const rects = [];
@@ -38,11 +39,12 @@ function dividePolygon(poly, rows, cols) {
             const x2 = x1 + cell_width;
             const y2 = y1 + cell_height;
 
-            const squareCell = polygon([[x1, y1], [x2, y1], [x2, y2], [x1, y2], [x1, y1]]);
-            const intersects = intersect(squareCell, poly1)
-            console.log(intersects);
+            const squareCell = new Polygon([[x1, y1], [x2, y1], [x2, y2], [x1, y2], [x1, y1]]);
+            const intersects = poly1.intersect(squareCell)
+            //const intersectPolygon = new Polygon([intersects])
+            //const intersectArea =  intersectPolygon.area()
             // Add cell to list of rectangles
-            if (intersects) {
+            if (intersects.length || poly1.contains(squareCell)) {
                 if (x1 >= min_x && y1 >= min_y && x2 <= max_x && y2 <= max_y /*&& intersectionArea === rectArea*/) {
                     rects.push({ x: x1.toFixed(3), y: y1.toFixed(3), width: cell_width.toFixed(3), height: cell_height.toFixed(3) });
                 } else {
@@ -195,14 +197,14 @@ function ThreeScene({ cameraStatus, setCamera, model }) {
                 if (angleCount >= 1 / (angleChange / Math.PI) * 2) {
                     const material = new THREE.LineBasicMaterial({ color: 0x0000ff });
                     const points = [];
-                    //vertices.push(vertices[0])
+                    vertices.push(vertices[0])
                     vertices.forEach(vertice => {
                         points.push(new THREE.Vector3(vertice.x, 1, vertice.y));
                     })
                     const geometry = new THREE.BufferGeometry().setFromPoints(points);
                     const line = new THREE.Line(geometry, material);
                     scene.add(line);
-                    vertices.push(vertices[0])
+                    
                     measureVertices = false
                     angleChange = 0
                     vertices.forEach((vertice, index) => {
@@ -213,7 +215,6 @@ function ThreeScene({ cameraStatus, setCamera, model }) {
                         hitbox.position.z = vertice.y
                         scene.add(hitbox)
                     })
-
                     const allSquares = dividePolygon(vertices, 9, 9)
                     allSquares.forEach((square, index) => {
                         const newSquare = new THREE.Mesh(new THREE.BoxGeometry(parseFloat(square.width) * 0.975, 0.25, parseFloat(square.height) * 0.975), new THREE.MeshStandardMaterial({ color: '#00ff00' }))
