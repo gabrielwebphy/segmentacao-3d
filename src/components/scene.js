@@ -27,8 +27,7 @@ function dividePolygon(poly, rows, cols) {
     const cell_width = (max_x - min_x) / cols;
     const cell_height = (max_y - min_y) / rows;
 
-
-    let poly1 = new Polygon([poly.map(p => [p.x*1.1, p.y*1.1])])
+    let poly1 = new Polygon([poly.map(p => [p.x+p.x*(cell_width/4)/Math.abs(p.x), p.y+p.y*(cell_height/4)/Math.abs(p.y)])])
     //let m = new Matrix(0,0,0,1.5,0,0)
     //poly1 = poly1.transform(m);
 
@@ -48,7 +47,8 @@ function dividePolygon(poly, rows, cols) {
             const intersectPolygon = new Polygon([...intersects])
             const intersectionArea = intersectPolygon.area()
             const rectArea = squareCell.area()
-            console.log(intersectionArea, rectArea);
+            //console.log(intersectionArea, rectArea);
+            console.log(Math.abs(x1-x2), Math.abs(y1-y2));
             // Add cell to list of rectangles
             if (poly1.contains(squareCell)) {
                 if (x1 >= min_x && y1 >= min_y && x2 <= max_x && y2 <= max_y) {
@@ -107,10 +107,10 @@ function ThreeScene({ cameraStatus, setCamera, model }) {
         const gridHelper = new THREE.GridHelper(size, divisions, 0xbbbbbb, 0xbbbbbb);
         //scene.add(gridHelper);
 
-        const wall = new THREE.Mesh(new THREE.BoxGeometry(4, 2, 0.2), new THREE.MeshStandardMaterial({ color: '#ff0000' }))
+        const wall = new THREE.Mesh(new THREE.BoxGeometry(6, 2, 0.2), new THREE.MeshStandardMaterial({ color: '#ff0000' }))
         wall.position.y = 1
         wall.position.z = 3
-        wall.position.x = 1
+        wall.position.x = 2
         const wall2 = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 0.2), new THREE.MeshStandardMaterial({ color: '#ff0000' }))
         wall2.position.z = -3
         wall2.position.x = 0
@@ -124,14 +124,33 @@ function ThreeScene({ cameraStatus, setCamera, model }) {
         wall23.position.x = -1
         wall23.rotation.y = Math.PI / 2
         wall23.position.y = 1
-        const wall3 = new THREE.Mesh(new THREE.BoxGeometry(4, 2, 0.2), new THREE.MeshStandardMaterial({ color: '#ff0000' }))
+        const wall3 = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 0.2), new THREE.MeshStandardMaterial({ color: '#ff0000' }))
         wall3.position.y = 1
-        wall3.position.x = 3
+        wall3.position.x = 2
         wall3.rotation.y = Math.PI / 2
-        wall3.position.z = 1
-        const wall32 = new THREE.Mesh(new THREE.BoxGeometry(2.2, 2, 0.2), new THREE.MeshStandardMaterial({ color: '#ff0000' }))
+        wall3.position.z = 2
+        const wall34 = new THREE.Mesh(new THREE.BoxGeometry(3*Math.sqrt(2), 2, 0.2), new THREE.MeshStandardMaterial({ color: '#ff0000' }))
+        wall34.position.y = 1
+        wall34.position.x = 3.5
+        wall34.rotation.y = Math.PI / 4
+        wall34.position.z = 4.5
+        const wall35 = new THREE.Mesh(new THREE.BoxGeometry(5, 2, 0.2), new THREE.MeshStandardMaterial({ color: '#ff0000' }))
+        wall35.position.y = 1
+        wall35.position.x = 4.5
+        wall35.position.z = 6
+        const wall36 = new THREE.Mesh(new THREE.BoxGeometry(5, 2, 0.2), new THREE.MeshStandardMaterial({ color: '#ff0000' }))
+        wall36.position.y = 1
+        wall36.position.x = 7
+        wall36.rotation.y = Math.PI / 2
+        wall36.position.z = 3.5
+        const wall37 = new THREE.Mesh(new THREE.BoxGeometry(2*Math.sqrt(2), 2, 0.2), new THREE.MeshStandardMaterial({ color: '#ff0000' }))
+        wall37.position.y = 1
+        wall37.position.x = 6
+        wall37.rotation.y = -Math.PI / 4
+        wall37.position.z = 0
+        const wall32 = new THREE.Mesh(new THREE.BoxGeometry(4, 2, 0.2), new THREE.MeshStandardMaterial({ color: '#ff0000' }))
         wall32.position.y = 1
-        wall32.position.x = 2
+        wall32.position.x = 3
         wall32.position.z = -1
         const wall33 = new THREE.Mesh(new THREE.BoxGeometry(2.2, 2, 0.2), new THREE.MeshStandardMaterial({ color: '#ff0000' }))
         wall33.position.y = 1
@@ -160,10 +179,14 @@ function ThreeScene({ cameraStatus, setCamera, model }) {
         wall3.updateMatrix()
         wall32.updateMatrix()
         wall33.updateMatrix()
+        wall34.updateMatrix()
+        wall35.updateMatrix()
+        wall36.updateMatrix()
+        wall37.updateMatrix()
         wall4.updateMatrix()
         wall43.updateMatrix()
 
-        const allWalls = CSG.union(wall, CSG.union(wall2, CSG.union(wall22, CSG.union(wall23, CSG.union(wall3, CSG.union(wall32, CSG.union(wall33, CSG.union(wall4, wall43))))))))
+        const allWalls = CSG.union(wall, CSG.union(wall2, CSG.union(wall22, CSG.union(wall23, CSG.union(wall3, CSG.union(wall32, CSG.union(wall33, CSG.union(wall34, CSG.union(wall35, CSG.union(wall36, CSG.union(wall37, CSG.union(wall4, wall43))))))))))))
         scene.add(allWalls)
 
         const roof = new THREE.Mesh(new THREE.BoxGeometry(20, 0.2, 20), new THREE.MeshStandardMaterial({ color: '#ffffff' }))
@@ -219,7 +242,7 @@ function ThreeScene({ cameraStatus, setCamera, model }) {
                         hitbox.position.z = vertice.y
                         scene.add(hitbox)
                     })
-                    const allSquares = dividePolygon(vertices, 9, 9)
+                    const allSquares = dividePolygon(vertices, 12, 15)
                     allSquares.forEach((square, index) => {
                         const newSquare = new THREE.Mesh(new THREE.BoxGeometry(parseFloat(square.width) * 0.975, 0.25, parseFloat(square.height) * 0.975), new THREE.MeshStandardMaterial({ color: '#00ff00' }))
                         newSquare.position.x = parseFloat(square.x) + parseFloat(square.width) / 2
