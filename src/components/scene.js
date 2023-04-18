@@ -27,7 +27,7 @@ function dividePolygon(poly, rows, cols) {
     const cell_width = (max_x - min_x) / cols;
     const cell_height = (max_y - min_y) / rows;
 
-    let poly1 = new Polygon([poly.map(p => [p.x+p.x*(cell_width/4)/Math.abs(p.x), p.y+p.y*(cell_height/4)/Math.abs(p.y)])])
+    let poly1 = new Polygon([poly.map(p => [p.x + p.x * (cell_width / 4) / Math.abs(p.x), p.y + p.y * (cell_height / 4) / Math.abs(p.y)])])
     //let m = new Matrix(0,0,0,1.5,0,0)
     //poly1 = poly1.transform(m);
 
@@ -48,7 +48,6 @@ function dividePolygon(poly, rows, cols) {
             const intersectionArea = intersectPolygon.area()
             const rectArea = squareCell.area()
             //console.log(intersectionArea, rectArea);
-            console.log(Math.abs(x1-x2), Math.abs(y1-y2));
             // Add cell to list of rectangles
             if (poly1.contains(squareCell)) {
                 if (x1 >= min_x && y1 >= min_y && x2 <= max_x && y2 <= max_y) {
@@ -129,7 +128,7 @@ function ThreeScene({ cameraStatus, setCamera, model }) {
         wall3.position.x = 2
         wall3.rotation.y = Math.PI / 2
         wall3.position.z = 2
-        const wall34 = new THREE.Mesh(new THREE.BoxGeometry(3*Math.sqrt(2), 2, 0.2), new THREE.MeshStandardMaterial({ color: '#ff0000' }))
+        const wall34 = new THREE.Mesh(new THREE.BoxGeometry(3 * Math.sqrt(2), 2, 0.2), new THREE.MeshStandardMaterial({ color: '#ff0000' }))
         wall34.position.y = 1
         wall34.position.x = 3.5
         wall34.rotation.y = Math.PI / 4
@@ -143,7 +142,7 @@ function ThreeScene({ cameraStatus, setCamera, model }) {
         wall36.position.x = 7
         wall36.rotation.y = Math.PI / 2
         wall36.position.z = 3.5
-        const wall37 = new THREE.Mesh(new THREE.BoxGeometry(2*Math.sqrt(2), 2, 0.2), new THREE.MeshStandardMaterial({ color: '#ff0000' }))
+        const wall37 = new THREE.Mesh(new THREE.BoxGeometry(2 * Math.sqrt(2), 2, 0.2), new THREE.MeshStandardMaterial({ color: '#ff0000' }))
         wall37.position.y = 1
         wall37.position.x = 6
         wall37.rotation.y = -Math.PI / 4
@@ -208,48 +207,67 @@ function ThreeScene({ cameraStatus, setCamera, model }) {
         let angleCount = 0
         let measureVertices = true
         let angleChange = Math.PI / 90
+        let otherSegments = []
+        let currentSegmentCount = 1
+        let first = true
+        let allPoints = []
 
         function animate() {
             requestAnimationFrame(animate);
-            camera.rotation.y += angleChange
+            //camera.rotation.y += angleChange
+            if (first) {
+                setCamera({ x: camera.position.x, y: camera.position.y, z: camera.position.z, target: { x: controls.target.x, y: controls.target.y, z: controls.target.z } })
+                raycaster.setFromCamera(pointer, camera);
+                const intersects = raycaster.intersectObjects(scene.children, false)
+                intersects[0]
+            }
 
-            setCamera({ x: camera.position.x, y: camera.position.y, z: camera.position.z, target: { x: controls.target.x, y: controls.target.y, z: controls.target.z } })
-            raycaster.setFromCamera(pointer, camera);
-            const intersects = raycaster.intersectObjects(scene.children, false);
             angleCount++
-            if (intersects.length > 0 && measureVertices) {
+            /*if (intersects.length > 0 && measureVertices) {
+                
+                if(intersects.length!==currentSegmentCount){
+                    console.log(currentSegmentCount);
+                    if(intersects.length>currentSegmentCount){
+                        otherSegments.push([])
+                    }
+                    else{
+                        console.log('diminuiu');
+                    }
+                    currentSegmentCount = intersects.length
+                }
+
                 intersects.forEach(intersection => {
                     const currentPoint = { x: intersection.point.x, y: intersection.point.z }
                     vertices.push(currentPoint)
+                })*/
+            if (false) {//angleCount >= 1 / (angleChange / Math.PI) * 2) {
+                const material = new THREE.LineBasicMaterial({ color: 0x0000ff });
+                const points = [];
+                vertices.forEach(vertice => {
+                    points.push(new THREE.Vector3(vertice.x, 1, vertice.y));
                 })
-                if (angleCount >= 1 / (angleChange / Math.PI) * 2) {
-                    const material = new THREE.LineBasicMaterial({ color: 0x0000ff });
-                    const points = [];
-                    vertices.forEach(vertice => {
-                        points.push(new THREE.Vector3(vertice.x, 1, vertice.y));
-                    })
-                    const geometry = new THREE.BufferGeometry().setFromPoints(points);
-                    const line = new THREE.Line(geometry, material);
-                    scene.add(line);
-                    
-                    measureVertices = false
-                    angleChange = 0
-                    vertices.forEach((vertice, index) => {
-                        const material = new THREE.MeshStandardMaterial();
-                        material.color = new THREE.Color(`rgb(${Math.floor(index * 255 / vertices.length)}, 0, 255)`);
-                        const hitbox = new THREE.Mesh(new THREE.BoxGeometry(0.05, 1, 0.05), material)
-                        hitbox.position.x = vertice.x
-                        hitbox.position.z = vertice.y
-                        scene.add(hitbox)
-                    })
-                    const allSquares = dividePolygon(vertices, 12, 15)
-                    allSquares.forEach((square, index) => {
-                        const newSquare = new THREE.Mesh(new THREE.BoxGeometry(parseFloat(square.width) * 0.975, 0.25, parseFloat(square.height) * 0.975), new THREE.MeshStandardMaterial({ color: '#00ff00' }))
-                        newSquare.position.x = parseFloat(square.x) + parseFloat(square.width) / 2
-                        newSquare.position.z = parseFloat(square.y) + parseFloat(square.height) / 2
-                        scene.add(newSquare)
-                    })
-                }
+                const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                const line = new THREE.Line(geometry, material);
+                scene.add(line);
+
+                measureVertices = false
+                angleChange = 0
+                vertices.forEach((vertice, index) => {
+                    const material = new THREE.MeshStandardMaterial();
+                    material.color = new THREE.Color(`rgb(${Math.floor(index * 255 / vertices.length)}, 0, 255)`);
+                    const hitbox = new THREE.Mesh(new THREE.BoxGeometry(0.05, 1, 0.05), material)
+                    hitbox.position.x = vertice.x
+                    hitbox.position.z = vertice.y
+                    scene.add(hitbox)
+                })
+                const allSquares = dividePolygon(vertices, 12, 15)
+                allSquares.forEach((square, index) => {
+                    const newSquare = new THREE.Mesh(new THREE.BoxGeometry(parseFloat(square.width) * 0.975, 0.25, parseFloat(square.height) * 0.975), new THREE.MeshStandardMaterial({ color: '#00ff00' }))
+                    newSquare.position.x = parseFloat(square.x) + parseFloat(square.width) / 2
+                    newSquare.position.z = parseFloat(square.y) + parseFloat(square.height) / 2
+                    scene.add(newSquare)
+                })
+
             }
             renderer.render(scene, camera);
         }
