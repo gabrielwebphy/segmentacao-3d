@@ -129,7 +129,7 @@ function ThreeScene({ cameraStatus, setCamera, model }) {
         wall3.position.x = 2
         wall3.rotation.y = Math.PI / 2
         wall3.position.z = 2
-        const wall34 = new THREE.Mesh(new THREE.BoxGeometry(3 * Math.sqrt(2), 2, 0.2), new THREE.MeshStandardMaterial({ color: '#ff0000' }))
+        const wall34 = new THREE.Mesh(new THREE.BoxGeometry(3.1 * Math.sqrt(2), 2, 0.2), new THREE.MeshStandardMaterial({ color: '#ff0000' }))
         wall34.position.y = 1
         wall34.position.x = 3.5
         wall34.rotation.y = Math.PI / 4
@@ -143,7 +143,7 @@ function ThreeScene({ cameraStatus, setCamera, model }) {
         wall36.position.x = 7
         wall36.rotation.y = Math.PI / 2
         wall36.position.z = 3.5
-        const wall37 = new THREE.Mesh(new THREE.BoxGeometry(2 * Math.sqrt(2), 2, 0.2), new THREE.MeshStandardMaterial({ color: '#ff0000' }))
+        const wall37 = new THREE.Mesh(new THREE.BoxGeometry(2.1 * Math.sqrt(2), 2, 0.2), new THREE.MeshStandardMaterial({ color: '#ff0000' }))
         wall37.position.y = 1
         wall37.position.x = 6
         wall37.rotation.y = -Math.PI / 4
@@ -166,7 +166,7 @@ function ThreeScene({ cameraStatus, setCamera, model }) {
         wall42.position.y = 1
         wall42.position.x = -2
         wall42.position.z = 1
-        const wall43 = new THREE.Mesh(new THREE.BoxGeometry(2 * Math.sqrt(2), 2, 0.2), new THREE.MeshStandardMaterial({ color: '#ff0000' }))
+        const wall43 = new THREE.Mesh(new THREE.BoxGeometry(2.1 * Math.sqrt(2), 2, 0.2), new THREE.MeshStandardMaterial({ color: '#ff0000' }))
         wall43.position.y = 1
         wall43.position.x = -2
         wall43.position.z = 2
