@@ -3,6 +3,7 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls"
 //import marmore from '../textures/marmore.jpg'
 import * as THREE from 'three';
 //import path1 from '@/textures/apart_06.glb'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import loadModel from './loadModel';
 import { CSG } from 'three-csg-ts'
 import Flatten from '@flatten-js/core';
@@ -70,7 +71,9 @@ function dividePolygon(poly, rows, cols) {
 }
 //const floorTexture = new THREE.MeshStandardMaterial({ map: new THREE.TextureLoader().load(marmore) })
 
-function ThreeScene({ cameraStatus, setCamera, model }) {
+function ThreeScene({ cameraStatus, setCamera, model, setModel
+
+ }) {
     const containerRef = useRef(null);
 
     useEffect(() => {
@@ -85,9 +88,17 @@ function ThreeScene({ cameraStatus, setCamera, model }) {
         const controls = new OrbitControls(camera, renderer.domElement);
         const raycaster = new THREE.Raycaster(camera.getWorldPosition(new THREE.Vector3()), camera.getWorldDirection(new THREE.Vector3()));
         const pointer = new THREE.Vector2();
-        const direction = new THREE.Vector3()
         pointer.x = 0
         pointer.y = 0
+
+        //console.log('foi');
+        const gltfLoader = new GLTFLoader();
+        gltfLoader.load('./textures/apart_06.glb', (gltf) => {
+          setModel(gltf.scene);
+          //scene.add(gltf.scene);
+          console.log('foi');
+        });
+    
 
         const light2 = new THREE.PointLight(0xffffff, 0.45);
         light2.position.set(0, 3, 5);
@@ -277,7 +288,7 @@ function ThreeScene({ cameraStatus, setCamera, model }) {
                     const currentPoint = { x: intersection.point.x, y: intersection.point.z }
                     vertices.push(currentPoint)
                 })*/
-            if (allPoints.length>50 && measureVertices){//(allPoints.length > 100) {//angleCount >= 1 / (angleChange / Math.PI) * 2) {
+            if (allPoints.length>60 && measureVertices){//(allPoints.length > 100) {//angleCount >= 1 / (angleChange / Math.PI) * 2) {
                 console.log(allPoints);
                 measureVertices = false
                 const material = new THREE.LineBasicMaterial({ color: 0x0000ff });
