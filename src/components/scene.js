@@ -19,16 +19,16 @@ function dividePolygon(poly, rows, cols) {
     for (let i = 0; i < poly.length; i++) {
         const p = poly[i];
         min_x = Math.min(min_x, p.x);
-        min_y = Math.min(min_y, p.y);
+        min_y = Math.min(min_y, p.z);
         max_x = Math.max(max_x, p.x);
-        max_y = Math.max(max_y, p.y);
+        max_y = Math.max(max_y, p.z);
     }
 
     // Step 2: Divide rectangle into grid
     const cell_width = (max_x - min_x) / cols;
     const cell_height = (max_y - min_y) / rows;
 
-    let poly1 = new Polygon([poly.map(p => [p.x + p.x * (cell_width / 4) / Math.abs(p.x), p.y + p.y * (cell_height / 4) / Math.abs(p.y)])])
+    let poly1 = new Polygon([poly.map(p => [p.x*1.05 /*+ p.x * (cell_width / 4) / Math.abs(p.x)*/, p.z*1.05 /*+ p.y * (cell_height / 4) / Math.abs(p.y)*/])])
     //let m = new Matrix(0,0,0,1.5,0,0)
     //poly1 = poly1.transform(m);
 
@@ -73,7 +73,7 @@ function dividePolygon(poly, rows, cols) {
 
 function ThreeScene({ cameraStatus, setCamera, model, setModel
 
- }) {
+}) {
     const containerRef = useRef(null);
 
     useEffect(() => {
@@ -94,11 +94,10 @@ function ThreeScene({ cameraStatus, setCamera, model, setModel
         //console.log('foi');
         const gltfLoader = new GLTFLoader();
         gltfLoader.load('./textures/apart_06.glb', (gltf) => {
-          setModel(gltf.scene);
-          //scene.add(gltf.scene);
-          console.log('foi');
+            setModel(gltf.scene);
+            //scene.add(gltf.scene);
         });
-    
+
 
         const light2 = new THREE.PointLight(0xffffff, 0.45);
         light2.position.set(0, 3, 5);
@@ -215,83 +214,58 @@ function ThreeScene({ cameraStatus, setCamera, model, setModel
         controls.target = new THREE.Vector3(cameraStatus.target.x, cameraStatus.target.y, cameraStatus.target.z);
         controls.update();
 
-        let vertices = []
-        let angleCount = 0
         let measureVertices = true
-        let angleChange = Math.PI / 90
-        let otherSegments = []
-        let currentSegmentCount = 1
         let first = true
         let allPoints = []
         let lastAngle = null
+        let allLines = []
+        const raycasterFar = 0.1
+        const angleOpening = 15
+        // Quando não funciona: Quando a abertura angular é muito pequena, fica preso na quina
+
+        function distance(point1,point2){
+            return Math.sqrt((point1.x-point2.x)**2+(point1.z-point2.z)**2)
+        }
 
         function animate() {
             requestAnimationFrame(animate);
-            //camera.rotation.y += angleChange
             if (measureVertices) {
                 if (first) {
                     setCamera({ x: camera.position.x, y: camera.position.y, z: camera.position.z, target: { x: controls.target.x, y: controls.target.y, z: controls.target.z } })
                     raycaster.setFromCamera(pointer, camera);
                     const intersects = raycaster.intersectObjects(scene.children, false)
-                    allPoints.push({x:intersects[0].point.x, y:1, z:intersects[0].point.z})
+                    allPoints.push({ x: intersects[0].point.x, y: 1, z: intersects[0].point.z })
                     first = false
                 }
                 let point = allPoints[allPoints.length - 1]
-                //camera.lookAt(point.x, 1.5, point.z)
-                //camera.position.x = point.x
-                //camera.position.z = point.z
                 const centerX = point.x
                 const centerZ = point.z
                 const hitAngles = []
-                for (let i = 0; i < 360; i = i + 5) {
+                for (let i = 0; i < 360; i = i + angleOpening) {
                     let newPoint = { x: 0, y: 1, z: 0 }
                     newPoint.x = centerX
                     newPoint.z = centerZ
-                    raycaster.set(newPoint, new THREE.Vector3(Math.sin(i * Math.PI / 180) * 0.1, 1, Math.cos(i * Math.PI / 180) * 0.1))
-                    raycaster.far = 0.1
-                    //console.log(raycaster);
+                    const newAngle = lastAngle === null ? i : (lastAngle + 180 + angleOpening + i) % 360
+                    raycaster.set(newPoint, new THREE.Vector3(Math.sin(newAngle * Math.PI / 180) * raycasterFar, 0, Math.cos(newAngle * Math.PI / 180) * raycasterFar))
+                    raycaster.far = raycasterFar
                     const intersects = raycaster.intersectObjects(scene.children, false)
-                    //console.log(newPoint.x, newPoint.z,intersects.length);
-                    const material = new THREE.LineBasicMaterial({
-                        color: 0x0000ff
-                    });
-
-                    if (intersects.length && i !== lastAngle + 180 % 360) {
-                        /*const points = [];
-                        points.push(new THREE.Vector3(point.x, 1, point.z));
-                        points.push(new THREE.Vector3(point.x + Math.sin(i * Math.PI / 180) * 0.1, 1, point.z + Math.cos(i * Math.PI / 180) * 0.1));
-                        const geometry = new THREE.BufferGeometry().setFromPoints(points);
-                        const line = new THREE.Line(geometry, material);
-                        scene.add(line);*/
-                        hitAngles.push(i)
+                    if (intersects.length && newAngle !== lastAngle + 180 % 360) {
+                        allLines.push({ point: point, angle: newAngle })
+                        hitAngles.push(newAngle)
                     }
                 }
-                const angle = hitAngles[0] - 5 % 360
-                allPoints.push({ x: point.x + Math.sin(angle*Math.PI/180) * 0.1, y: 1, z: point.z + Math.cos(angle*Math.PI/180)*0.1 })
+                const angle = hitAngles[0] - angleOpening % 360
+                if(!hitAngles[0]){measureVertices = false}
+                lastAngle = angle
+                console.log(hitAngles.length, allPoints.length);
+                allPoints.push({ x: point.x + Math.sin(angle * Math.PI / 180) * raycasterFar, y: 1, z: point.z + Math.cos(angle * Math.PI / 180) * raycasterFar })
             }
 
-            //angleCount++
-            /*if (intersects.length > 0 && measureVertices) {
-                
-                if(intersects.length!==currentSegmentCount){
-                    console.log(currentSegmentCount);
-                    if(intersects.length>currentSegmentCount){
-                        otherSegments.push([])
-                    }
-                    else{
-                        console.log('diminuiu');
-                    }
-                    currentSegmentCount = intersects.length
-                }
-
-                intersects.forEach(intersection => {
-                    const currentPoint = { x: intersection.point.x, y: intersection.point.z }
-                    vertices.push(currentPoint)
-                })*/
-            if (allPoints.length>60 && measureVertices){//(allPoints.length > 100) {//angleCount >= 1 / (angleChange / Math.PI) * 2) {
+            if (distance(allPoints[0], allPoints[1]) > distance(allPoints[0], allPoints[allPoints.length-1]) && measureVertices) {
                 console.log(allPoints);
                 measureVertices = false
-                const material = new THREE.LineBasicMaterial({ color: 0x0000ff });
+                const material = new THREE.LineBasicMaterial({ color: 0xff00ff });
+                const material2 = new THREE.LineBasicMaterial({ color: 0x0000ff });
                 const points = [];
                 allPoints.forEach(vertice => {
                     points.push(new THREE.Vector3(vertice.x, 1, vertice.z));
@@ -300,8 +274,16 @@ function ThreeScene({ cameraStatus, setCamera, model, setModel
                 const line = new THREE.Line(geometry, material);
                 scene.add(line);
 
+                allLines.forEach(line => {
+                    const points = [];
+                    points.push(new THREE.Vector3(line.point.x, 1, line.point.z));
+                    points.push(new THREE.Vector3(line.point.x + Math.sin(line.angle * Math.PI / 180) * raycasterFar, 1, line.point.z + Math.cos(line.angle * Math.PI / 180) * raycasterFar));
+                    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                    const newLine = new THREE.Line(geometry, material2);
+                    scene.add(newLine);
+                })
                 measureVertices = false
-                angleChange = 0
+                allPoints.push(allPoints[0])
                 allPoints.forEach((vertice, index) => {
                     const material = new THREE.MeshStandardMaterial();
                     material.color = new THREE.Color(`rgb(${Math.floor(index * 255 / allPoints.length)}, 0, 255)`);
@@ -310,13 +292,13 @@ function ThreeScene({ cameraStatus, setCamera, model, setModel
                     hitbox.position.z = vertice.z
                     scene.add(hitbox)
                 })
-                /*const allSquares = dividePolygon(vertices, 12, 15)
+                const allSquares = dividePolygon(allPoints, 24, 30)
                 allSquares.forEach((square, index) => {
                     const newSquare = new THREE.Mesh(new THREE.BoxGeometry(parseFloat(square.width) * 0.975, 0.25, parseFloat(square.height) * 0.975), new THREE.MeshStandardMaterial({ color: '#00ff00' }))
                     newSquare.position.x = parseFloat(square.x) + parseFloat(square.width) / 2
                     newSquare.position.z = parseFloat(square.y) + parseFloat(square.height) / 2
                     scene.add(newSquare)
-                })*/
+                })
 
             }
             renderer.render(scene, camera);

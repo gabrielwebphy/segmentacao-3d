@@ -9,7 +9,7 @@ export default function Home() {
 
   return (
     <>
-    { <ThreeScene cameraStatus={cameraStatus} setCamera={setCamera} model={model} setModel={setModel}/>}
+     <ThreeScene cameraStatus={cameraStatus} setCamera={setCamera} model={model} setModel={setModel}/>
   </>
   )
 }
