@@ -1,10 +1,7 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls"
-//import marmore from '../textures/marmore.jpg'
 import * as THREE from 'three';
-//import path1 from '@/textures/apart_06.glb'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
-import loadModel from './loadModel';
 import { CSG } from 'three-csg-ts'
 import Flatten from '@flatten-js/core';
 const { Polygon, Matrix } = Flatten
@@ -28,7 +25,7 @@ function dividePolygon(poly, rows, cols) {
     const cell_width = (max_x - min_x) / cols;
     const cell_height = (max_y - min_y) / rows;
 
-    let poly1 = new Polygon([poly.map(p => [p.x*1.05 /*+ p.x * (cell_width / 4) / Math.abs(p.x)*/, p.z*1.05 /*+ p.y * (cell_height / 4) / Math.abs(p.y)*/])])
+    let poly1 = new Polygon([poly.map(p => [p.x * 1.01 /*+ p.x * (cell_width / 4) / Math.abs(p.x)*/, p.z * 1.01 /*+ p.y * (cell_height / 4) / Math.abs(p.y)*/])])
     //let m = new Matrix(0,0,0,1.5,0,0)
     //poly1 = poly1.transform(m);
 
@@ -71,10 +68,11 @@ function dividePolygon(poly, rows, cols) {
 }
 //const floorTexture = new THREE.MeshStandardMaterial({ map: new THREE.TextureLoader().load(marmore) })
 
-function ThreeScene({ cameraStatus, setCamera, model, setModel
-
-}) {
+function ThreeScene({ cameraStatus, setCamera }) {
     const containerRef = useRef(null);
+    const [model, setModel] = useState(null);
+    const modelRef = useRef(null)
+    modelRef.current = model
 
     useEffect(() => {
         const scene = new THREE.Scene();
@@ -94,9 +92,10 @@ function ThreeScene({ cameraStatus, setCamera, model, setModel
         //console.log('foi');
         const gltfLoader = new GLTFLoader();
         gltfLoader.load('./textures/apart_06.glb', (gltf) => {
-            setModel(gltf.scene);
-            //scene.add(gltf.scene);
-        });
+            scene.add(gltf.scene)
+            setModel(gltf.scene)
+            setTimeout(() => console.log(modelRef.current), 500)
+        })
 
 
         const light2 = new THREE.PointLight(0xffffff, 0.45);
@@ -109,8 +108,6 @@ function ThreeScene({ cameraStatus, setCamera, model, setModel
         scene.add(light3);
         const light = new THREE.AmbientLight(0xffffff, 0.35)
         scene.add(light)
-
-        console.log(model);
 
         const size = 100;
         const divisions = 100;
@@ -197,7 +194,7 @@ function ThreeScene({ cameraStatus, setCamera, model, setModel
         wall43.updateMatrix()
 
         const allWalls = CSG.union(wall, CSG.union(wall2, CSG.union(wall22, CSG.union(wall23, CSG.union(wall3, CSG.union(wall32, CSG.union(wall33, CSG.union(wall34, CSG.union(wall35, CSG.union(wall36, CSG.union(wall37, CSG.union(wall4, wall43))))))))))))
-        scene.add(allWalls)
+        //scene.add(allWalls)
 
         const roof = new THREE.Mesh(new THREE.BoxGeometry(20, 0.2, 20), new THREE.MeshStandardMaterial({ color: '#ffffff' }))
         roof.position.y = 6
@@ -223,13 +220,17 @@ function ThreeScene({ cameraStatus, setCamera, model, setModel
         const angleOpening = 15
         // Quando não funciona: Quando a abertura angular é muito pequena, fica preso na quina
 
-        function distance(point1,point2){
-            return Math.sqrt((point1.x-point2.x)**2+(point1.z-point2.z)**2)
+        function distance(point1, point2) {
+            return Math.sqrt((point1.x - point2.x) ** 2 + (point1.z - point2.z) ** 2)
         }
 
+        // adaptar o loop do animate() para while() e fazer somente no começo (ou até dentro do animate, mas dentro de uma iteração só)
+        //while()
+
         function animate() {
+            //console.log(model);
             requestAnimationFrame(animate);
-            if (measureVertices) {
+            if (measureVertices && modelRef.current) {
                 if (first) {
                     setCamera({ x: camera.position.x, y: camera.position.y, z: camera.position.z, target: { x: controls.target.x, y: controls.target.y, z: controls.target.z } })
                     raycaster.setFromCamera(pointer, camera);
@@ -255,13 +256,13 @@ function ThreeScene({ cameraStatus, setCamera, model, setModel
                     }
                 }
                 const angle = hitAngles[0] - angleOpening % 360
-                if(!hitAngles[0]){measureVertices = false}
+                if (!hitAngles[0]) { measureVertices = false }
                 lastAngle = angle
                 console.log(hitAngles.length, allPoints.length);
                 allPoints.push({ x: point.x + Math.sin(angle * Math.PI / 180) * raycasterFar, y: 1, z: point.z + Math.cos(angle * Math.PI / 180) * raycasterFar })
             }
 
-            if (distance(allPoints[0], allPoints[1]) > distance(allPoints[0], allPoints[allPoints.length-1]) && measureVertices) {
+            if (allPoints.length && distance(allPoints[0], allPoints[1]) > distance(allPoints[0], allPoints[allPoints.length - 1]) && measureVertices) {
                 console.log(allPoints);
                 measureVertices = false
                 const material = new THREE.LineBasicMaterial({ color: 0xff00ff });
