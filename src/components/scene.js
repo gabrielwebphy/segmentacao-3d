@@ -5,6 +5,7 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { CSG } from "three-csg-ts";
 import Flatten from "@flatten-js/core";
 const { Polygon, Matrix } = Flatten;
+
 let { intersect, disjoint, equal, touch, inside, contain, covered, cover } = Flatten.Relations;
 
 function dividePolygon(poly, rows, cols) {
@@ -105,7 +106,7 @@ function ThreeScene({ cameraStatus, setCamera }) {
     pointer.y = 0;
 
     const gltfLoader = new GLTFLoader();
-    gltfLoader.load("./textures/apart_06.glb", (gltf) => {
+    gltfLoader.load("./textures/output.glb", (gltf) => {
       scene.add(gltf.scene);
       setTimeout(() => setModel(gltf.scene), 100);
       // sem a latência ele não identifica o 1 ponto
@@ -284,7 +285,7 @@ function ThreeScene({ cameraStatus, setCamera }) {
         const centerZ = point.z;
         const hitAngles = [];
         for (let i = 0; i < 360; i = i + angleOpening) {
-          let newPoint = { x: centerX, y:centerY, z: centerZ };
+          let newPoint = { x: centerX, y: centerY, z: centerZ };
           const newAngle = lastAngle === null ? i : (lastAngle + 180 + angleOpening + i) % 360;
           //const origin = new THREE.Vector3(newPoint.x-Math.sin(newAngle)*0.01, newPoint.y, newPoint.z-Math.cos(newAngle)*0.01)
           const origin = new THREE.Vector3(newPoint.x, newPoint.y, newPoint.z)
@@ -338,9 +339,9 @@ function ThreeScene({ cameraStatus, setCamera }) {
           const hitbox = new THREE.Mesh(new THREE.BoxGeometry(0.05, 1, 0.05), material);
           hitbox.position.x = vertice.x;
           hitbox.position.z = vertice.z;
-          scene.add(hitbox);
+          //scene.add(hitbox);
         });
-        const allSquares = dividePolygon(allPoints, 24, 30);
+        const allSquares = dividePolygon(allPoints, 24, 30)
         allSquares.forEach((square, index) => {
           const newSquare = new THREE.Mesh(new THREE.BoxGeometry(parseFloat(square.width) * 0.975, 0.25, parseFloat(square.height) * 0.975), new THREE.MeshStandardMaterial({ color: "#00ff00" }));
           newSquare.position.x = parseFloat(square.x) + parseFloat(square.width) / 2;
