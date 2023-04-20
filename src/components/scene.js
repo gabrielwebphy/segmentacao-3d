@@ -6,8 +6,6 @@ import { CSG } from "three-csg-ts";
 import Flatten from "@flatten-js/core";
 const { Polygon, Matrix } = Flatten;
 
-let { intersect, disjoint, equal, touch, inside, contain, covered, cover } = Flatten.Relations;
-
 function dividePolygon(poly, rows, cols) {
   // Step 1: Find outer bounds of polygon
   let min_x = Number.POSITIVE_INFINITY;
@@ -26,9 +24,7 @@ function dividePolygon(poly, rows, cols) {
   const cell_width = (max_x - min_x) / cols;
   const cell_height = (max_y - min_y) / rows;
 
-  let poly1 = new Polygon([poly.map((p) => [p.x /* *1.01 */ /*+ p.x * (cell_width / 4) / Math.abs(p.x)*/, p.z /* *1.01 */ /*+ p.y * (cell_height / 4) / Math.abs(p.y)*/])]);
-  //let m = new Matrix(0,0,0,1.5,0,0)
-  //poly1 = poly1.transform(m);
+  let poly1 = new Polygon([poly.map((p) => [p.x, p.z])]);
 
   console.log(poly1.isValid());
   // Step 3 and 4: Check cells for overlap
@@ -48,10 +44,6 @@ function dividePolygon(poly, rows, cols) {
         [x1, y2],
       ]);
       const intersects = poly1.intersect(squareCell);
-      const intersectPolygon = new Polygon([...intersects]);
-      const intersectionArea = intersectPolygon.area();
-      const rectArea = squareCell.area();
-      //console.log(intersectionArea, rectArea);
       // Add cell to list of rectangles
       if (poly1.contains(squareCell)) {
         if (x1 >= min_x && y1 >= min_y && x2 <= max_x && y2 <= max_y) {
@@ -82,9 +74,8 @@ function dividePolygon(poly, rows, cols) {
   console.log(rects);
   return rects;
 }
-//const floorTexture = new THREE.MeshStandardMaterial({ map: new THREE.TextureLoader().load(marmore) })
 
-function ThreeScene({ cameraStatus, setCamera }) {
+function ThreeScene({ cameraStatus }) {
   const containerRef = useRef(null);
   const [model, setModel] = useState(null);
   const modelRef = useRef(null);
@@ -106,7 +97,7 @@ function ThreeScene({ cameraStatus, setCamera }) {
     pointer.y = 0;
 
     const gltfLoader = new GLTFLoader();
-    gltfLoader.load("./textures/output.glb", (gltf) => {
+    gltfLoader.load("./textures/apart_06.glb", (gltf) => {
       scene.add(gltf.scene);
       setTimeout(() => setModel(gltf.scene), 100);
       // sem a latência ele não identifica o 1 ponto
@@ -122,11 +113,6 @@ function ThreeScene({ cameraStatus, setCamera }) {
     scene.add(light3);
     const light = new THREE.AmbientLight(0xffffff, 0.35);
     scene.add(light);
-
-    const size = 100;
-    const divisions = 100;
-    const gridHelper = new THREE.GridHelper(size, divisions, 0xbbbbbb, 0xbbbbbb);
-    //scene.add(gridHelper);
 
     const wall = new THREE.Mesh(new THREE.BoxGeometry(6, 2, 0.2), new THREE.MeshStandardMaterial({ color: "#ff0000" }));
     wall.position.y = 1;
@@ -217,11 +203,8 @@ function ThreeScene({ cameraStatus, setCamera }) {
         )
       )
     );
-    //scene.add(allWalls)
+   //scene.add(allWalls)
 
-    const roof = new THREE.Mesh(new THREE.BoxGeometry(20, 0.2, 20), new THREE.MeshStandardMaterial({ color: "#ffffff" }));
-    roof.position.y = 6;
-    //scene.add(roof)
     const floor = new THREE.Mesh(new THREE.BoxGeometry(20, 0.2, 20), new THREE.MeshStandardMaterial({ color: "#ffffff" }));
     floor.position.y = 0;
     scene.add(floor);
@@ -229,7 +212,6 @@ function ThreeScene({ cameraStatus, setCamera }) {
     camera.position.x = cameraStatus.x;
     camera.position.y = cameraStatus.y;
     camera.position.z = cameraStatus.z;
-    camera.rotation.y = Math.PI / 2;
 
     controls.target = new THREE.Vector3(cameraStatus.target.x, cameraStatus.target.y, cameraStatus.target.z);
     controls.update();
@@ -239,75 +221,76 @@ function ThreeScene({ cameraStatus, setCamera }) {
     let allPoints = [];
     let lastAngle = null;
     let allLines = [];
+    let cameraLookHeight = cameraStatus.target.y;
     const raycasterFar = 0.1;
     const angleOpening = 5;
-    // Quando não funciona: Quando a abertura angular é muito pequena (ou muito grande), ou a distância é inexata, e fica preso na quina
-    // Considerar a distância de intersecção, e não distância fixa
-    /*
-        hitAngles.push({angle:newAngle, distance:intersects[0].distance !== 0 ? intersects[0].distance : raycasterFar (ou só considerar a distância de intersecção quando o ângulo muda)})
-        */
+    function resetValues(){
+      first = true;
+      console.log("deu pau");
+      allPoints = [];
+      lastAngle = null;
+      allLines = [];
+      camera.position.y += 0.05;
+      cameraLookHeight += 0.05;
+      camera.lookAt(new THREE.Vector3(cameraStatus.target.x, cameraLookHeight, cameraStatus.target.z));
+    }
 
     function distance(point1, point2) {
       return Math.sqrt((point1.x - point2.x) ** 2 + (point1.z - point2.z) ** 2);
     }
 
     // adaptar o loop do animate() para while() e fazer somente no começo (ou até dentro do animate, mas dentro de uma iteração só)
-    //while()
 
     function animate() {
-      //console.log(model);
       requestAnimationFrame(animate);
       if (measureVertices && modelRef.current) {
         if (first) {
-          console.log("primeiro ponto");
-          setCamera({
-            x: camera.position.x,
-            y: camera.position.y,
-            z: camera.position.z,
-            target: {
-              x: controls.target.x,
-              y: controls.target.y,
-              z: controls.target.z,
-            },
-          });
           raycaster.setFromCamera(pointer, camera);
+          raycaster.far = 1000;
           const intersects = raycaster.intersectObjects(scene.children, true);
-          allPoints.push({
-            x: intersects[0].point.x,//+0.01,
-            y: intersects[0].point.y,
-            z: intersects[0].point.z,
-          });
+          if (intersects.length) {
+            allPoints.push({
+              x: intersects[0].point.x,
+              y: intersects[0].point.y,
+              z: intersects[0].point.z,
+            });
+          }
+          console.log("primeiro ponto", allPoints);
           first = false;
         }
-        let point = allPoints[allPoints.length - 1];
-        const centerX = point.x;
-        const centerY = point.y
-        const centerZ = point.z;
-        const hitAngles = [];
-        for (let i = 0; i < 360; i = i + angleOpening) {
-          let newPoint = { x: centerX, y: centerY, z: centerZ };
-          const newAngle = lastAngle === null ? i : (lastAngle + 180 + angleOpening + i) % 360;
-          //const origin = new THREE.Vector3(newPoint.x-Math.sin(newAngle)*0.01, newPoint.y, newPoint.z-Math.cos(newAngle)*0.01)
-          const origin = new THREE.Vector3(newPoint.x, newPoint.y, newPoint.z)
-          raycaster.set(origin, new THREE.Vector3(Math.sin((newAngle * Math.PI) / 180) * raycasterFar, 0, Math.cos((newAngle * Math.PI) / 180) * raycasterFar));
-          raycaster.far = raycasterFar;
-          const intersects = raycaster.intersectObjects(scene.children, true);
-          if (intersects.length /*&& newAngle !== (lastAngle + 180) % 360*/) {
-            allLines.push({ point: point, angle: newAngle });
-            hitAngles.push(newAngle);
+        if (allPoints.length) {
+          let point = allPoints[allPoints.length - 1];
+          const centerX = point.x;
+          const centerY = point.y;
+          const centerZ = point.z;
+          const hitAngles = [];
+          for (let i = 0; i < 360; i = i + angleOpening) {
+            let newPoint = { x: centerX, y: centerY, z: centerZ };
+            const newAngle = lastAngle === null ? i : (lastAngle + 180 + angleOpening + i) % 360;
+            const origin = new THREE.Vector3(newPoint.x, newPoint.y, newPoint.z);
+            raycaster.set(origin, new THREE.Vector3(Math.sin((newAngle * Math.PI) / 180) * raycasterFar, 0, Math.cos((newAngle * Math.PI) / 180) * raycasterFar));
+            raycaster.far = raycasterFar;
+            const intersects = raycaster.intersectObjects(scene.children, true);
+            if (intersects.length) {
+              allLines.push({ point: point, angle: newAngle });
+              hitAngles.push(newAngle);
+            }
           }
+          const angle = (hitAngles[0] - angleOpening) % 360;
+          const lastAngleRef = lastAngle;
+          lastAngle = angle;
+          console.log(angle);
+          allPoints.push({
+            x: point.x + Math.sin((angle * Math.PI) / 180) * raycasterFar,
+            y: point.y,
+            z: point.z + Math.cos((angle * Math.PI) / 180) * raycasterFar,
+          });
+          if (!hitAngles[0] || ((lastAngleRef + 180) % 360 === angle && lastAngleRef !== null)) {
+            resetValues()
+          }
+        } else {
+          resetValues()
         }
-        const angle = (hitAngles[0] - angleOpening) % 360;
-        if (!hitAngles[0]) {
-          measureVertices = false;
-        }
-        lastAngle = angle;
-        console.log(angle);
-        allPoints.push({
-          x: point.x + Math.sin((angle * Math.PI) / 180) * raycasterFar,
-          y: point.y,
-          z: point.z + Math.cos((angle * Math.PI) / 180) * raycasterFar,
-        });
       }
 
       if (allPoints.length && distance(allPoints[0], allPoints[1]) > distance(allPoints[0], allPoints[allPoints.length - 1]) && measureVertices) {
@@ -341,7 +324,7 @@ function ThreeScene({ cameraStatus, setCamera }) {
           hitbox.position.z = vertice.z;
           //scene.add(hitbox);
         });
-        const allSquares = dividePolygon(allPoints, 24, 30)
+        const allSquares = dividePolygon(allPoints, 24, 30);
         allSquares.forEach((square, index) => {
           const newSquare = new THREE.Mesh(new THREE.BoxGeometry(parseFloat(square.width) * 0.975, 0.25, parseFloat(square.height) * 0.975), new THREE.MeshStandardMaterial({ color: "#00ff00" }));
           newSquare.position.x = parseFloat(square.x) + parseFloat(square.width) / 2;
