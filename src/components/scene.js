@@ -43,7 +43,6 @@ function dividePolygon(poly, rows, cols) {
         [x2, y2],
         [x1, y2],
       ]);
-      const intersects = poly1.intersect(squareCell);
       // Add cell to list of rectangles
       if (poly1.contains(squareCell)) {
         if (x1 >= min_x && y1 >= min_y && x2 <= max_x && y2 <= max_y) {
