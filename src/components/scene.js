@@ -206,7 +206,7 @@ function ThreeScene({ cameraStatus }) {
 
     const floor = new THREE.Mesh(new THREE.BoxGeometry(20, 0.2, 20), new THREE.MeshStandardMaterial({ color: "#ffffff" }));
     floor.position.y = 0;
-    scene.add(floor);
+    //scene.add(floor);
 
     camera.position.x = cameraStatus.x;
     camera.position.y = cameraStatus.y;
