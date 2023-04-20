@@ -25,7 +25,7 @@ function dividePolygon(poly, rows, cols) {
   const cell_width = (max_x - min_x) / cols;
   const cell_height = (max_y - min_y) / rows;
 
-  let poly1 = new Polygon([poly.map((p) => [p.x * 1.01 /*+ p.x * (cell_width / 4) / Math.abs(p.x)*/, p.z * 1.01 /*+ p.y * (cell_height / 4) / Math.abs(p.y)*/])]);
+  let poly1 = new Polygon([poly.map((p) => [p.x /* *1.01 */ /*+ p.x * (cell_width / 4) / Math.abs(p.x)*/, p.z /* *1.01 */ /*+ p.y * (cell_height / 4) / Math.abs(p.y)*/])]);
   //let m = new Matrix(0,0,0,1.5,0,0)
   //poly1 = poly1.transform(m);
 
@@ -104,11 +104,11 @@ function ThreeScene({ cameraStatus, setCamera }) {
     pointer.x = 0;
     pointer.y = 0;
 
-    //console.log('foi');
     const gltfLoader = new GLTFLoader();
     gltfLoader.load("./textures/apart_06.glb", (gltf) => {
-      //scene.add(gltf.scene);
+      scene.add(gltf.scene);
       setTimeout(() => setModel(gltf.scene), 100);
+      // sem a latência ele não identifica o 1 ponto
     });
 
     const light2 = new THREE.PointLight(0xffffff, 0.45);
@@ -216,7 +216,7 @@ function ThreeScene({ cameraStatus, setCamera }) {
         )
       )
     );
-    scene.add(allWalls)
+    //scene.add(allWalls)
 
     const roof = new THREE.Mesh(new THREE.BoxGeometry(20, 0.2, 20), new THREE.MeshStandardMaterial({ color: "#ffffff" }));
     roof.position.y = 6;
@@ -243,7 +243,7 @@ function ThreeScene({ cameraStatus, setCamera }) {
     // Quando não funciona: Quando a abertura angular é muito pequena (ou muito grande), ou a distância é inexata, e fica preso na quina
     // Considerar a distância de intersecção, e não distância fixa
     /*
-        hitAngles.push({angle:newAngle, distance:intersects[0].distance !== 0 ? intersects[0].distance : raycasterFar})
+        hitAngles.push({angle:newAngle, distance:intersects[0].distance !== 0 ? intersects[0].distance : raycasterFar (ou só considerar a distância de intersecção quando o ângulo muda)})
         */
 
     function distance(point1, point2) {
@@ -287,8 +287,8 @@ function ThreeScene({ cameraStatus, setCamera }) {
           let newPoint = { x: centerX, y:centerY, z: centerZ };
           const newAngle = lastAngle === null ? i : (lastAngle + 180 + angleOpening + i) % 360;
           //const origin = new THREE.Vector3(newPoint.x-Math.sin(newAngle)*0.01, newPoint.y, newPoint.z-Math.cos(newAngle)*0.01)
-          const origin = new THREE.Vector3(newPoint)
-          raycaster.set(newPoint, new THREE.Vector3(Math.sin((newAngle * Math.PI) / 180) * raycasterFar, 0, Math.cos((newAngle * Math.PI) / 180) * raycasterFar));
+          const origin = new THREE.Vector3(newPoint.x, newPoint.y, newPoint.z)
+          raycaster.set(origin, new THREE.Vector3(Math.sin((newAngle * Math.PI) / 180) * raycasterFar, 0, Math.cos((newAngle * Math.PI) / 180) * raycasterFar));
           raycaster.far = raycasterFar;
           const intersects = raycaster.intersectObjects(scene.children, true);
           if (intersects.length /*&& newAngle !== (lastAngle + 180) % 360*/) {
@@ -301,7 +301,7 @@ function ThreeScene({ cameraStatus, setCamera }) {
           measureVertices = false;
         }
         lastAngle = angle;
-        console.log(hitAngles.length, allPoints.length, angle);
+        console.log(angle);
         allPoints.push({
           x: point.x + Math.sin((angle * Math.PI) / 180) * raycasterFar,
           y: point.y,
@@ -338,7 +338,7 @@ function ThreeScene({ cameraStatus, setCamera }) {
           const hitbox = new THREE.Mesh(new THREE.BoxGeometry(0.05, 1, 0.05), material);
           hitbox.position.x = vertice.x;
           hitbox.position.z = vertice.z;
-          //scene.add(hitbox);
+          scene.add(hitbox);
         });
         const allSquares = dividePolygon(allPoints, 24, 30);
         allSquares.forEach((square, index) => {
