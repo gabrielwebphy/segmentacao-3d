@@ -97,7 +97,7 @@ function ThreeScene({ cameraStatus }) {
     let squareMin, squareMax, line, line2
 
     const gltfLoader = new GLTFLoader();
-    gltfLoader.load("./textures/apart_06.glb", (gltf) => {
+    gltfLoader.load("./textures/output.glb", (gltf) => {
       scene.add(gltf.scene);
       const boundingBox = new THREE.Box3().setFromObject(gltf.scene);
       squareMin = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshStandardMaterial({ color: 0xff00ff }))
@@ -223,6 +223,7 @@ function ThreeScene({ cameraStatus }) {
       )
     );
     //scene.add(allWalls)
+    // allWalls não irá funcionar por causa da bounding box referente ao modelo que intersectará as paredes quando adicionada
 
     const floor = new THREE.Mesh(new THREE.BoxGeometry(20, 0.2, 20), new THREE.MeshStandardMaterial({ color: "#ffffff" }));
     floor.position.y = 0;
