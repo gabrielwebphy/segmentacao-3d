@@ -94,13 +94,34 @@ function ThreeScene({ cameraStatus }) {
     const pointer = new THREE.Vector2();
     pointer.x = 0;
     pointer.y = 0;
+    let squareMin, squareMax, line, line2
 
     const gltfLoader = new GLTFLoader();
     gltfLoader.load("./textures/apart_06.glb", (gltf) => {
       scene.add(gltf.scene);
+      const boundingBox = new THREE.Box3().setFromObject(gltf.scene);
+      console.log(boundingBox);
+      squareMin = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshStandardMaterial({ color: 0xff00ff }))
+      squareMin.position.set(boundingBox.min.x, boundingBox.min.y, boundingBox.min.z)
+      squareMax = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshStandardMaterial({ color: 0xff00ff }))
+      squareMax.position.set(boundingBox.max.x, boundingBox.max.y, boundingBox.max.z)
+      const material = new THREE.LineBasicMaterial({ color: 0x00ff00 });
+      const points = [new THREE.Vector3(boundingBox.max.x, -10, boundingBox.max.z), new THREE.Vector3(boundingBox.max.x, 10, boundingBox.max.z)];
+      const points2 = [new THREE.Vector3(boundingBox.min.x, -10, boundingBox.min.z), new THREE.Vector3(boundingBox.min.x, 10, boundingBox.min.z)];
+      const geometry = new THREE.BufferGeometry().setFromPoints(points);
+      const geometry2 = new THREE.BufferGeometry().setFromPoints(points2);
+      line = new THREE.Line(geometry, material);
+      line2 = new THREE.Line(geometry2, material)
+      const boxMaterial = new THREE.MeshStandardMaterial({ color: 0x0000ff, transparent: true, opacity: 0.5 })
+      const outerBox = new THREE.Mesh(new THREE.BoxGeometry(Math.abs(squareMax.position.x - squareMin.position.x), Math.abs(squareMax.position.y - squareMin.position.y), Math.abs(squareMax.position.z - squareMin.position.z)), boxMaterial)
+      outerBox.position.set((squareMax.position.x + squareMin.position.x) / 2, (squareMax.position.y + squareMin.position.y) / 2, (squareMax.position.z + squareMin.position.z) / 2)
+      //scene.add(outerBox)
+      camera.position.set((squareMax.position.x + squareMin.position.x) / 2, squareMin.position.y, (squareMax.position.z + squareMin.position.z) / 2)
+      camera.lookAt(new THREE.Vector3((squareMax.position.x + squareMin.position.x) / 2 + 1, squareMin.position.y-10, (squareMax.position.z + squareMin.position.z) / 2));
       setTimeout(() => setModel(gltf.scene), 100);
       // sem a latência ele não identifica o 1 ponto
     });
+
 
     const light2 = new THREE.PointLight(0xffffff, 0.45);
     light2.position.set(0, 3, 5);
@@ -202,36 +223,28 @@ function ThreeScene({ cameraStatus }) {
         )
       )
     );
-   //scene.add(allWalls)
+    //scene.add(allWalls)
 
     const floor = new THREE.Mesh(new THREE.BoxGeometry(20, 0.2, 20), new THREE.MeshStandardMaterial({ color: "#ffffff" }));
     floor.position.y = 0;
     //scene.add(floor);
-
-    camera.position.x = cameraStatus.x;
-    camera.position.y = cameraStatus.y;
-    camera.position.z = cameraStatus.z;
-
-    controls.target = new THREE.Vector3(cameraStatus.target.x, cameraStatus.target.y, cameraStatus.target.z);
-    controls.update();
 
     let measureVertices = true;
     let first = true;
     let allPoints = [];
     let lastAngle = null;
     let allLines = [];
-    let cameraLookHeight = cameraStatus.target.y;
+
     const raycasterFar = 0.1;
     const angleOpening = 5;
-    function resetValues(){
+    function resetValues() {
       first = true;
       console.log("deu pau");
       allPoints = [];
       lastAngle = null;
       allLines = [];
-      camera.position.y += 0.05;
-      cameraLookHeight += 0.05;
-      camera.lookAt(new THREE.Vector3(cameraStatus.target.x, cameraLookHeight, cameraStatus.target.z));
+      camera.position.y += 0.025;
+      camera.lookAt(new THREE.Vector3(camera.position.x-0.5, camera.position.y, camera.position.z));
     }
 
     function distance(point1, point2) {
@@ -293,6 +306,7 @@ function ThreeScene({ cameraStatus }) {
       }
 
       if (allPoints.length && distance(allPoints[0], allPoints[1]) > distance(allPoints[0], allPoints[allPoints.length - 1]) && measureVertices) {
+        scene.add(line, line2, squareMax, squareMin)
         console.log(allPoints);
         measureVertices = false;
         const material = new THREE.LineBasicMaterial({ color: 0xff00ff });
@@ -302,8 +316,8 @@ function ThreeScene({ cameraStatus }) {
           points.push(new THREE.Vector3(vertice.x, vertice.y, vertice.z));
         });
         const geometry = new THREE.BufferGeometry().setFromPoints(points);
-        const line = new THREE.Line(geometry, material);
-        scene.add(line);
+        const line3 = new THREE.Line(geometry, material);
+        scene.add(line3);
 
         allLines.forEach((line) => {
           const points = [];
