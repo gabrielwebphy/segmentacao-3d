@@ -100,7 +100,6 @@ function ThreeScene({ cameraStatus }) {
     gltfLoader.load("./textures/apart_06.glb", (gltf) => {
       scene.add(gltf.scene);
       const boundingBox = new THREE.Box3().setFromObject(gltf.scene);
-      console.log(boundingBox);
       squareMin = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshStandardMaterial({ color: 0xff00ff }))
       squareMin.position.set(boundingBox.min.x, boundingBox.min.y, boundingBox.min.z)
       squareMax = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshStandardMaterial({ color: 0xff00ff }))
@@ -115,9 +114,9 @@ function ThreeScene({ cameraStatus }) {
       const boxMaterial = new THREE.MeshStandardMaterial({ color: 0x0000ff, transparent: true, opacity: 0.5 })
       const outerBox = new THREE.Mesh(new THREE.BoxGeometry(Math.abs(squareMax.position.x - squareMin.position.x), Math.abs(squareMax.position.y - squareMin.position.y), Math.abs(squareMax.position.z - squareMin.position.z)), boxMaterial)
       outerBox.position.set((squareMax.position.x + squareMin.position.x) / 2, (squareMax.position.y + squareMin.position.y) / 2, (squareMax.position.z + squareMin.position.z) / 2)
-      //scene.add(outerBox)
+      scene.add(outerBox)
       camera.position.set((squareMax.position.x + squareMin.position.x) / 2, squareMin.position.y, (squareMax.position.z + squareMin.position.z) / 2)
-      camera.lookAt(new THREE.Vector3((squareMax.position.x + squareMin.position.x) / 2 + 1, squareMin.position.y-10, (squareMax.position.z + squareMin.position.z) / 2));
+      camera.lookAt(new THREE.Vector3((squareMax.position.x + squareMin.position.x) / 2 - 0.5, squareMin.position.y, (squareMax.position.z + squareMin.position.z) / 2));
       setTimeout(() => setModel(gltf.scene), 100);
       // sem a latência ele não identifica o 1 ponto
     });
@@ -243,7 +242,7 @@ function ThreeScene({ cameraStatus }) {
       allPoints = [];
       lastAngle = null;
       allLines = [];
-      camera.position.y += 0.025;
+      camera.position.y += 0.05;
       camera.lookAt(new THREE.Vector3(camera.position.x-0.5, camera.position.y, camera.position.z));
     }
 
@@ -267,7 +266,6 @@ function ThreeScene({ cameraStatus }) {
               z: intersects[0].point.z,
             });
           }
-          console.log("primeiro ponto", allPoints);
           first = false;
         }
         if (allPoints.length) {
