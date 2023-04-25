@@ -77,8 +77,11 @@ function dividePolygon(poly, rows, cols) {
 function ThreeScene({ cameraStatus }) {
   const containerRef = useRef(null);
   const [model, setModel] = useState(null);
+  const [grid, setGrid] = useState({rows:0, cols:0})
   const modelRef = useRef(null);
   modelRef.current = model;
+  const gridRef = useRef(null)
+  gridRef.current = grid
 
   useEffect(() => {
     const scene = new THREE.Scene();
@@ -97,13 +100,17 @@ function ThreeScene({ cameraStatus }) {
     let squareMin, squareMax, line, line2
 
     const gltfLoader = new GLTFLoader();
-    gltfLoader.load("./textures/output.glb", (gltf) => {
+    gltfLoader.load("./textures/apart_06.glb", (gltf) => {
       scene.add(gltf.scene);
       const boundingBox = new THREE.Box3().setFromObject(gltf.scene);
       squareMin = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshStandardMaterial({ color: 0xff00ff }))
       squareMin.position.set(boundingBox.min.x, boundingBox.min.y, boundingBox.min.z)
       squareMax = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshStandardMaterial({ color: 0xff00ff }))
       squareMax.position.set(boundingBox.max.x, boundingBox.max.y, boundingBox.max.z)
+      const nRows = Math.floor(squareMax.position.z - squareMin.position.z)*2
+      const nCols = Math.floor(squareMax.position.x - squareMin.position.x)*2
+      console.log(nRows, nCols);
+      setGrid({rows:nRows, cols:nCols})
       const material = new THREE.LineBasicMaterial({ color: 0x00ff00 });
       const points = [new THREE.Vector3(boundingBox.max.x, -10, boundingBox.max.z), new THREE.Vector3(boundingBox.max.x, 10, boundingBox.max.z)];
       const points2 = [new THREE.Vector3(boundingBox.min.x, -10, boundingBox.min.z), new THREE.Vector3(boundingBox.min.x, 10, boundingBox.min.z)];
@@ -116,7 +123,7 @@ function ThreeScene({ cameraStatus }) {
       outerBox.position.set((squareMax.position.x + squareMin.position.x) / 2, (squareMax.position.y + squareMin.position.y) / 2, (squareMax.position.z + squareMin.position.z) / 2)
       scene.add(outerBox)
       camera.position.set((squareMax.position.x + squareMin.position.x) / 2, squareMin.position.y, (squareMax.position.z + squareMin.position.z) / 2)
-      camera.lookAt(new THREE.Vector3((squareMax.position.x + squareMin.position.x) / 2 - 0.5, squareMin.position.y, (squareMax.position.z + squareMin.position.z) / 2));
+      camera.lookAt(new THREE.Vector3(camera.position.x - 0.5, camera.position.y, camera.position.z))
       setTimeout(() => setModel(gltf.scene), 100);
       // sem a latência ele não identifica o 1 ponto
     });
@@ -336,7 +343,8 @@ function ThreeScene({ cameraStatus }) {
           hitbox.position.z = vertice.z;
           //scene.add(hitbox);
         });
-        const allSquares = dividePolygon(allPoints, 24, 30);
+        console.log(gridRef.current);
+        const allSquares = dividePolygon(allPoints, gridRef.current.rows, gridRef.current.cols);
         allSquares.forEach((square, index) => {
           const newSquare = new THREE.Mesh(new THREE.BoxGeometry(parseFloat(square.width) * 0.975, 0.25, parseFloat(square.height) * 0.975), new THREE.MeshStandardMaterial({ color: "#00ff00" }));
           newSquare.position.x = parseFloat(square.x) + parseFloat(square.width) / 2;
