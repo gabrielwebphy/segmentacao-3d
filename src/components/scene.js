@@ -3,6 +3,7 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { CSG } from "three-csg-ts";
+import {FBXLoader} from 'three/examples/jsm/loaders/FBXLoader.js'
 import Flatten from "@flatten-js/core";
 const { Polygon, Matrix } = Flatten;
 
@@ -99,10 +100,20 @@ function ThreeScene({ cameraStatus }) {
     pointer.y = 0;
     let squareMin, squareMax, line, line2
 
-    const gltfLoader = new GLTFLoader();
-    gltfLoader.load("./textures/apart_06.glb", (gltf) => {
-      scene.add(gltf.scene);
-      const boundingBox = new THREE.Box3().setFromObject(gltf.scene);
+    //const loader = new FBXLoader();
+    const currentFormat = 'glb'
+    const loader = new GLTFLoader()
+    loader.load("./textures/output.glb", (object) => {
+      scene.add(currentFormat === 'glb' ? object.scene: object);
+      if(currentFormat === 'fbx'){
+        object.traverse(child => {
+          if(child.isMesh){
+            child.castShadow = true
+            child.receiveShadow = true
+          }
+        })
+      }
+      const boundingBox = new THREE.Box3().setFromObject(currentFormat === 'glb' ? object.scene: object);
       squareMin = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshStandardMaterial({ color: 0xff00ff }))
       squareMin.position.set(boundingBox.min.x, boundingBox.min.y, boundingBox.min.z)
       squareMax = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshStandardMaterial({ color: 0xff00ff }))
@@ -124,12 +135,12 @@ function ThreeScene({ cameraStatus }) {
       scene.add(outerBox)
       camera.position.set((squareMax.position.x + squareMin.position.x) / 2, squareMin.position.y, (squareMax.position.z + squareMin.position.z) / 2)
       camera.lookAt(new THREE.Vector3(camera.position.x - 0.5, camera.position.y, camera.position.z))
-      setTimeout(() => setModel(gltf.scene), 100);
+      setTimeout(() => setModel(currentFormat === 'glb' ? object.scene: object), 100);
       // sem a latência ele não identifica o 1 ponto
     });
 
 
-    const light2 = new THREE.PointLight(0xffffff, 0.45);
+    const light2 = new THREE.PointLight(0xffffff, 0.05);
     light2.position.set(0, 3, 5);
     light2.castShadow = true;
     scene.add(light2);
