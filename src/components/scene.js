@@ -5,6 +5,11 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { CSG } from "three-csg-ts";
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
+import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js'
+import { ColladaLoader } from 'three/examples/jsm/loaders/ColladaLoader.js'
+import { VRMLLoader } from 'three/examples/jsm/loaders/VRMLLoader.js'
+import { AMFLoader } from 'three/examples/jsm/loaders/AMFLoader.js'
+import { ThreeMFLoader } from 'three/examples/jsm/loaders/3MFLoader.js'
 import Flatten from "@flatten-js/core";
 const { Polygon, Matrix } = Flatten;
 
