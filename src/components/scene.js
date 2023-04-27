@@ -109,18 +109,26 @@ function ThreeScene({ cameraStatus }) {
 
     const currentFormat = "glb";
     //const loader = new FBXLoader();
-    //const loader = new GLTFLoader()
+    const loader = new GLTFLoader();
     //const loader = new OBJLoader()
     //const loader = new STLLoader()
     //const loader = new ColladaLoader()
     //const loader = new VRMLLoader()
     //const loader = new AMFLoader()
-    const loader = new ThreeMFLoader()
+    //const loader = new ThreeMFLoader()
     // foi necessário remover as vigas
     loader.load("./textures/apart_06.glb", (object) => {
       if (currentFormat === "fbx") {
         object.scale.set(0.01, 0.01, 0.01);
         object.traverse(function (child) {
+          if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+          }
+        });
+      }
+      if (currentFormat === "glb") {
+        object.scene.traverse((child) => {
           if (child.isMesh) {
             child.castShadow = true;
             child.receiveShadow = true;
@@ -156,18 +164,16 @@ function ThreeScene({ cameraStatus }) {
       // sem a latência ele não identifica o 1 ponto
     });
 
-    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.5);
-    hemiLight.position.set(0, 200, 0);
-    scene.add(hemiLight);
-
-    const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
-    dirLight.position.set(0, 200, 100);
-    dirLight.castShadow = true;
-    dirLight.shadow.camera.top = 180;
-    dirLight.shadow.camera.bottom = -100;
-    dirLight.shadow.camera.left = -120;
-    dirLight.shadow.camera.right = 120;
-    scene.add(dirLight);
+    const light2 = new THREE.PointLight(0xffffff, 0.45);
+    light2.position.set(0, 3, 5);
+    light2.castShadow = true;
+    scene.add(light2);
+    const light3 = new THREE.PointLight(0xffffff, 0.075);
+    light3.position.set(0, 0, 5);
+    light3.castShadow = true;
+    scene.add(light3);
+    const light = new THREE.AmbientLight(0xffffff, 0.35);
+    scene.add(light);
 
     let measureVertices = true;
     let first = true;
