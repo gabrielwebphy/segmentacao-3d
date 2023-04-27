@@ -1,15 +1,16 @@
 import React, { useRef, useEffect, useState } from "react";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { TextureLoader } from "three";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { CSG } from "three-csg-ts";
-import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js'
-import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
-import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js'
-import { ColladaLoader } from 'three/examples/jsm/loaders/ColladaLoader.js'
-import { VRMLLoader } from 'three/examples/jsm/loaders/VRMLLoader.js'
-import { AMFLoader } from 'three/examples/jsm/loaders/AMFLoader.js'
-import { ThreeMFLoader } from 'three/examples/jsm/loaders/3MFLoader.js'
+import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
+import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
+import { STLLoader } from "three/examples/jsm/loaders/STLLoader.js";
+import { ColladaLoader } from "three/examples/jsm/loaders/ColladaLoader.js";
+import { VRMLLoader } from "three/examples/jsm/loaders/VRMLLoader.js";
+import { AMFLoader } from "three/examples/jsm/loaders/AMFLoader.js";
+import { ThreeMFLoader } from "three/examples/jsm/loaders/3MFLoader.js";
 import Flatten from "@flatten-js/core";
 const { Polygon, Matrix } = Flatten;
 
@@ -84,11 +85,11 @@ function dividePolygon(poly, rows, cols) {
 function ThreeScene({ cameraStatus }) {
   const containerRef = useRef(null);
   const [model, setModel] = useState(null);
-  const [grid, setGrid] = useState({ rows: 0, cols: 0 })
+  const [grid, setGrid] = useState({ rows: 0, cols: 0 });
   const modelRef = useRef(null);
   modelRef.current = model;
-  const gridRef = useRef(null)
-  gridRef.current = grid
+  const gridRef = useRef(null);
+  gridRef.current = grid;
 
   useEffect(() => {
     const scene = new THREE.Scene();
@@ -104,157 +105,69 @@ function ThreeScene({ cameraStatus }) {
     const pointer = new THREE.Vector2();
     pointer.x = 0;
     pointer.y = 0;
-    let squareMin, squareMax, line, line2
+    let squareMin, squareMax, line, line2;
 
+    const currentFormat = "glb";
     //const loader = new FBXLoader();
-    const currentFormat = 'glb'
-    const loader = new GLTFLoader()
+    //const loader = new GLTFLoader()
     //const loader = new OBJLoader()
+    //const loader = new STLLoader()
+    //const loader = new ColladaLoader()
+    //const loader = new VRMLLoader()
+    //const loader = new AMFLoader()
+    const loader = new ThreeMFLoader()
     // foi necessário remover as vigas
     loader.load("./textures/apart_06.glb", (object) => {
-      if (currentFormat !== 'glb') {
-        object.scale.set(0.01, 0.01, 0.01)
-        object.traverse(child => {
+      if (currentFormat === "fbx") {
+        object.scale.set(0.01, 0.01, 0.01);
+        object.traverse(function (child) {
           if (child.isMesh) {
-            child.castShadow = true
-            child.receiveShadow = true
+            child.castShadow = true;
+            child.receiveShadow = true;
           }
-        })
+        });
       }
-      scene.add(currentFormat === 'glb' ? object.scene : object);
-      const boundingBox = new THREE.Box3().setFromObject(currentFormat === 'glb' ? object.scene : object);
-      squareMin = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshStandardMaterial({ color: 0xff00ff }))
-      squareMin.position.set(boundingBox.min.x, boundingBox.min.y, boundingBox.min.z)
-      squareMax = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshStandardMaterial({ color: 0xff00ff }))
-      squareMax.position.set(boundingBox.max.x, boundingBox.max.y, boundingBox.max.z)
-      const nRows = Math.floor(squareMax.position.z - squareMin.position.z) * 2
-      const nCols = Math.floor(squareMax.position.x - squareMin.position.x) * 2
-      console.log(nRows, nCols);
-      setGrid({ rows: nRows, cols: nCols })
+      scene.add(currentFormat === "glb" ? object.scene : object);
+      const boundingBox = new THREE.Box3().setFromObject(currentFormat === "glb" ? object.scene : object);
+      squareMin = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshStandardMaterial({ color: 0xff00ff }));
+      squareMin.position.set(boundingBox.min.x, boundingBox.min.y, boundingBox.min.z);
+      squareMax = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshStandardMaterial({ color: 0xff00ff }));
+      squareMax.position.set(boundingBox.max.x, boundingBox.max.y, boundingBox.max.z);
+      const nRows = Math.abs(Math.floor(squareMax.position.z - squareMin.position.z) * 2);
+      const nCols = Math.abs(Math.floor(squareMax.position.x - squareMin.position.x) * 2);
+      setGrid({ rows: nRows, cols: nCols });
       const material = new THREE.LineBasicMaterial({ color: 0x00ff00 });
       const points = [new THREE.Vector3(boundingBox.max.x, -10, boundingBox.max.z), new THREE.Vector3(boundingBox.max.x, 10, boundingBox.max.z)];
       const points2 = [new THREE.Vector3(boundingBox.min.x, -10, boundingBox.min.z), new THREE.Vector3(boundingBox.min.x, 10, boundingBox.min.z)];
       const geometry = new THREE.BufferGeometry().setFromPoints(points);
       const geometry2 = new THREE.BufferGeometry().setFromPoints(points2);
       line = new THREE.Line(geometry, material);
-      line2 = new THREE.Line(geometry2, material)
-      const boxMaterial = new THREE.MeshStandardMaterial({ color: 0x0000ff, transparent: true, opacity: 0.5 })
-      const outerBox = new THREE.Mesh(new THREE.BoxGeometry(Math.abs(squareMax.position.x - squareMin.position.x), Math.abs(squareMax.position.y - squareMin.position.y), Math.abs(squareMax.position.z - squareMin.position.z)), boxMaterial)
-      outerBox.position.set((squareMax.position.x + squareMin.position.x) / 2, (squareMax.position.y + squareMin.position.y) / 2, (squareMax.position.z + squareMin.position.z) / 2)
-      scene.add(outerBox)
-      camera.position.set((squareMax.position.x + squareMin.position.x) / 2, squareMin.position.y, (squareMax.position.z + squareMin.position.z) / 2)
-      camera.lookAt(new THREE.Vector3(camera.position.x - 0.5, camera.position.y, camera.position.z))
-      setTimeout(() => setModel(currentFormat === 'glb' ? object.scene : object), 100);
+      line2 = new THREE.Line(geometry2, material);
+      const boxMaterial = new THREE.MeshStandardMaterial({ color: 0x0000ff, transparent: true, opacity: 0.5 });
+      const outerBox = new THREE.Mesh(
+        new THREE.BoxGeometry(Math.abs(squareMax.position.x - squareMin.position.x), Math.abs(squareMax.position.y - squareMin.position.y), Math.abs(squareMax.position.z - squareMin.position.z)),
+        boxMaterial
+      );
+      outerBox.position.set((squareMax.position.x + squareMin.position.x) / 2, (squareMax.position.y + squareMin.position.y) / 2, (squareMax.position.z + squareMin.position.z) / 2);
+      scene.add(outerBox);
+      camera.position.set((squareMax.position.x + squareMin.position.x) / 2, squareMin.position.y, (squareMax.position.z + squareMin.position.z) / 2);
+      camera.lookAt(new THREE.Vector3(camera.position.x - 0.5, camera.position.y, camera.position.z));
+      setTimeout(() => setModel(currentFormat === "glb" ? object.scene : object), 100);
       // sem a latência ele não identifica o 1 ponto
     });
 
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.5);
+    hemiLight.position.set(0, 200, 0);
+    scene.add(hemiLight);
 
-    const light2 = new THREE.PointLight(0xffffff, 0.05);
-    light2.position.set(0, 3, 5);
-    light2.castShadow = true;
-    scene.add(light2);
-    const light3 = new THREE.PointLight(0xffffff, 0.075);
-    light3.position.set(0, 0, 5);
-    light3.castShadow = true;
-    scene.add(light3);
-    const light = new THREE.AmbientLight(0xffffff, 0.35);
-    scene.add(light);
-
-    const wall = new THREE.Mesh(new THREE.BoxGeometry(6, 2, 0.2), new THREE.MeshStandardMaterial({ color: "#ff0000" }));
-    wall.position.y = 1;
-    wall.position.z = 3;
-    wall.position.x = 2;
-    const wall2 = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 0.2), new THREE.MeshStandardMaterial({ color: "#ff0000" }));
-    wall2.position.z = -3;
-    wall2.position.x = 0;
-    wall2.position.y = 1;
-    const wall22 = new THREE.Mesh(new THREE.BoxGeometry(2.2, 2, 0.2), new THREE.MeshStandardMaterial({ color: "#ff0000" }));
-    wall22.position.z = -1;
-    wall22.position.x = -2;
-    wall22.position.y = 1;
-    const wall23 = new THREE.Mesh(new THREE.BoxGeometry(2.2, 2, 0.2), new THREE.MeshStandardMaterial({ color: "#ff0000" }));
-    wall23.position.z = -2;
-    wall23.position.x = -1;
-    wall23.rotation.y = Math.PI / 2;
-    wall23.position.y = 1;
-    const wall3 = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 0.2), new THREE.MeshStandardMaterial({ color: "#ff0000" }));
-    wall3.position.y = 1;
-    wall3.position.x = 2;
-    wall3.rotation.y = Math.PI / 2;
-    wall3.position.z = 2;
-    const wall34 = new THREE.Mesh(new THREE.BoxGeometry(3.1 * Math.sqrt(2), 2, 0.2), new THREE.MeshStandardMaterial({ color: "#ff0000" }));
-    wall34.position.y = 1;
-    wall34.position.x = 3.5;
-    wall34.rotation.y = Math.PI / 4;
-    wall34.position.z = 4.5;
-    const wall35 = new THREE.Mesh(new THREE.BoxGeometry(5, 2, 0.2), new THREE.MeshStandardMaterial({ color: "#ff0000" }));
-    wall35.position.y = 1;
-    wall35.position.x = 4.5;
-    wall35.position.z = 6;
-    const wall36 = new THREE.Mesh(new THREE.BoxGeometry(5, 2, 0.2), new THREE.MeshStandardMaterial({ color: "#ff0000" }));
-    wall36.position.y = 1;
-    wall36.position.x = 7;
-    wall36.rotation.y = Math.PI / 2;
-    wall36.position.z = 3.5;
-    const wall37 = new THREE.Mesh(new THREE.BoxGeometry(2.1 * Math.sqrt(2), 2, 0.2), new THREE.MeshStandardMaterial({ color: "#ff0000" }));
-    wall37.position.y = 1;
-    wall37.position.x = 6;
-    wall37.rotation.y = -Math.PI / 4;
-    wall37.position.z = 0;
-    const wall32 = new THREE.Mesh(new THREE.BoxGeometry(4, 2, 0.2), new THREE.MeshStandardMaterial({ color: "#ff0000" }));
-    wall32.position.y = 1;
-    wall32.position.x = 3;
-    wall32.position.z = -1;
-    const wall33 = new THREE.Mesh(new THREE.BoxGeometry(2.2, 2, 0.2), new THREE.MeshStandardMaterial({ color: "#ff0000" }));
-    wall33.position.y = 1;
-    wall33.position.x = 1;
-    wall33.rotation.y = Math.PI / 2;
-    wall33.position.z = -2;
-    const wall4 = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 0.2), new THREE.MeshStandardMaterial({ color: "#ff0000" }));
-    wall4.position.y = 1;
-    wall4.position.x = -3;
-    wall4.position.z = 0;
-    wall4.rotation.y = Math.PI / 2;
-    const wall42 = new THREE.Mesh(new THREE.BoxGeometry(2.2, 2, 0.2), new THREE.MeshStandardMaterial({ color: "#ff0000" }));
-    wall42.position.y = 1;
-    wall42.position.x = -2;
-    wall42.position.z = 1;
-    const wall43 = new THREE.Mesh(new THREE.BoxGeometry(2.1 * Math.sqrt(2), 2, 0.2), new THREE.MeshStandardMaterial({ color: "#ff0000" }));
-    wall43.position.y = 1;
-    wall43.position.x = -2;
-    wall43.position.z = 2;
-    wall43.rotation.y = -Math.PI / 4;
-
-    wall.updateMatrix();
-    wall2.updateMatrix();
-    wall22.updateMatrix();
-    wall23.updateMatrix();
-    wall3.updateMatrix();
-    wall32.updateMatrix();
-    wall33.updateMatrix();
-    wall34.updateMatrix();
-    wall35.updateMatrix();
-    wall36.updateMatrix();
-    wall37.updateMatrix();
-    wall4.updateMatrix();
-    wall43.updateMatrix();
-
-    const allWalls = CSG.union(
-      wall,
-      CSG.union(
-        wall2,
-        CSG.union(
-          wall22,
-          CSG.union(wall23, CSG.union(wall3, CSG.union(wall32, CSG.union(wall33, CSG.union(wall34, CSG.union(wall35, CSG.union(wall36, CSG.union(wall37, CSG.union(wall4, wall43)))))))))
-        )
-      )
-    );
-    //scene.add(allWalls)
-    // allWalls não irá funcionar por causa da bounding box referente ao modelo que intersectará as paredes quando adicionada
-
-    const floor = new THREE.Mesh(new THREE.BoxGeometry(20, 0.2, 20), new THREE.MeshStandardMaterial({ color: "#ffffff" }));
-    floor.position.y = 0;
-    //scene.add(floor);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
+    dirLight.position.set(0, 200, 100);
+    dirLight.castShadow = true;
+    dirLight.shadow.camera.top = 180;
+    dirLight.shadow.camera.bottom = -100;
+    dirLight.shadow.camera.left = -120;
+    dirLight.shadow.camera.right = 120;
+    scene.add(dirLight);
 
     let measureVertices = true;
     let first = true;
@@ -324,15 +237,15 @@ function ThreeScene({ cameraStatus }) {
             z: point.z + Math.cos((angle * Math.PI) / 180) * raycasterFar,
           });
           if (!hitAngles[0] || ((lastAngleRef + 180) % 360 === angle && lastAngleRef !== null)) {
-            resetValues()
+            resetValues();
           }
         } else {
-          resetValues()
+          resetValues();
         }
       }
 
       if (allPoints.length && distance(allPoints[0], allPoints[1]) > distance(allPoints[0], allPoints[allPoints.length - 1]) && measureVertices) {
-        scene.add(line, line2, squareMax, squareMin)
+        scene.add(line, line2, squareMax, squareMin);
         console.log(allPoints);
         measureVertices = false;
         const material = new THREE.LineBasicMaterial({ color: 0xff00ff });
