@@ -1,4 +1,4 @@
-import ThreeScene from '../components/scene'
+import ThreeScene from '../../components/scene'
 import { Inter } from 'next/font/google'
 import { useState } from 'react'
 const inter = Inter({ subsets: ['latin'] })
