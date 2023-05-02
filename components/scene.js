@@ -100,11 +100,11 @@ function ThreeScene({ cameraStatus }) {
     pointer.y = 0;
     let squareMin, squareMax, line, line2;
     
-    const ifcLoader = new IFCLoader()
-    ifcLoader.ifcManager.setWasmPath('../../');
-    ifcLoader.load("./textures/projeto.ifc", (object) => {
-      scene.add(object);
-      const boundingBox = new THREE.Box3().setFromObject(object);
+    const ifcLoader = new GLTFLoader()
+    //ifcLoader.ifcManager.setWasmPath('../../');
+    ifcLoader.load("./textures/output.glb", (object) => {
+      scene.add(object.scene);
+      const boundingBox = new THREE.Box3().setFromObject(object.scene);
       squareMin = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshStandardMaterial({ color: 0xff00ff }));
       squareMin.position.set(boundingBox.min.x, boundingBox.min.y, boundingBox.min.z);
       squareMax = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshStandardMaterial({ color: 0xff00ff }));
@@ -128,7 +128,7 @@ function ThreeScene({ cameraStatus }) {
       scene.add(outerBox);
       camera.position.set((squareMax.position.x + squareMin.position.x) / 2, squareMin.position.y, (squareMax.position.z + squareMin.position.z) / 2);
       camera.lookAt(new THREE.Vector3(camera.position.x - 0.5, camera.position.y, camera.position.z));
-      setTimeout(() => setModel(object), 100);
+      setTimeout(() => setModel(object.scene), 100);
       // sem a latência ele não identifica o 1 ponto
     })
 
@@ -208,7 +208,7 @@ function ThreeScene({ cameraStatus }) {
           const intersects = raycaster.intersectObjects(scene.children, true);
           if (intersects.length) {
             allPoints.push({
-              x: intersects[0].point.x,
+              x: intersects[0].point.x*0.99,
               y: intersects[0].point.y,
               z: intersects[0].point.z,
             });
