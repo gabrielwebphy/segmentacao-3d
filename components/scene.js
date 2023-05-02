@@ -176,7 +176,7 @@ function ThreeScene({ cameraStatus }) {
           const intersects = raycaster.intersectObjects(scene.children, true);
           if (intersects.length) {
             allPoints.push({
-              x: intersects[0].point.x*0.995,
+              x: intersects[0].point.x*0.995, // É necessário para paredes com espessura zero (só funciona no GLB -> Testado várias vezes)
               y: intersects[0].point.y,
               z: intersects[0].point.z,
             });
