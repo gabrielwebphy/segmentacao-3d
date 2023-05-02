@@ -1,9 +1,7 @@
 import React, { useRef, useEffect, useState } from "react";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { TextureLoader } from "three";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
-import { IFCLoader } from "web-ifc-three";
 import Flatten from "@flatten-js/core";
 const { Polygon, Matrix } = Flatten;
 
@@ -99,16 +97,18 @@ function ThreeScene({ cameraStatus }) {
     pointer.x = 0;
     pointer.y = 0;
     let squareMin, squareMax, line, line2;
-    
-    const ifcLoader = new GLTFLoader()
-    //ifcLoader.ifcManager.setWasmPath('../../');
-    ifcLoader.load("./textures/output.glb", (object) => {
+
+    const loader = new GLTFLoader();
+    // foi necessário remover as vigas
+    loader.load("./textures/teste.glb", (object) => {
       scene.add(object.scene);
       const boundingBox = new THREE.Box3().setFromObject(object.scene);
+      console.log(boundingBox);
       squareMin = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshStandardMaterial({ color: 0xff00ff }));
       squareMin.position.set(boundingBox.min.x, boundingBox.min.y, boundingBox.min.z);
       squareMax = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshStandardMaterial({ color: 0xff00ff }));
       squareMax.position.set(boundingBox.max.x, boundingBox.max.y, boundingBox.max.z);
+      const height = squareMax.position.y - squareMin.position.y
       const nRows = Math.abs(Math.floor(squareMax.position.z - squareMin.position.z) * 2);
       const nCols = Math.abs(Math.floor(squareMax.position.x - squareMin.position.x) * 2);
       setGrid({ rows: nRows, cols: nCols });
@@ -126,43 +126,11 @@ function ThreeScene({ cameraStatus }) {
       );
       outerBox.position.set((squareMax.position.x + squareMin.position.x) / 2, (squareMax.position.y + squareMin.position.y) / 2, (squareMax.position.z + squareMin.position.z) / 2);
       scene.add(outerBox);
-      camera.position.set((squareMax.position.x + squareMin.position.x) / 2, squareMin.position.y, (squareMax.position.z + squareMin.position.z) / 2);
+      camera.position.set((squareMax.position.x + squareMin.position.x) / 2, squareMin.position.y+height/10, (squareMax.position.z + squareMin.position.z) / 2);
       camera.lookAt(new THREE.Vector3(camera.position.x - 0.5, camera.position.y, camera.position.z));
       setTimeout(() => setModel(object.scene), 100);
       // sem a latência ele não identifica o 1 ponto
-    })
-
-    // const loader = new GLTFLoader();
-    // // foi necessário remover as vigas
-    // loader.load("./textures/apart_06.glb", (object) => {
-    //   scene.add(object.scene);
-    //   const boundingBox = new THREE.Box3().setFromObject(object.scene);
-    //   squareMin = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshStandardMaterial({ color: 0xff00ff }));
-    //   squareMin.position.set(boundingBox.min.x, boundingBox.min.y, boundingBox.min.z);
-    //   squareMax = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshStandardMaterial({ color: 0xff00ff }));
-    //   squareMax.position.set(boundingBox.max.x, boundingBox.max.y, boundingBox.max.z);
-    //   const nRows = Math.abs(Math.floor(squareMax.position.z - squareMin.position.z) * 2);
-    //   const nCols = Math.abs(Math.floor(squareMax.position.x - squareMin.position.x) * 2);
-    //   setGrid({ rows: nRows, cols: nCols });
-    //   const material = new THREE.LineBasicMaterial({ color: 0x00ff00 });
-    //   const points = [new THREE.Vector3(boundingBox.max.x, -10, boundingBox.max.z), new THREE.Vector3(boundingBox.max.x, 10, boundingBox.max.z)];
-    //   const points2 = [new THREE.Vector3(boundingBox.min.x, -10, boundingBox.min.z), new THREE.Vector3(boundingBox.min.x, 10, boundingBox.min.z)];
-    //   const geometry = new THREE.BufferGeometry().setFromPoints(points);
-    //   const geometry2 = new THREE.BufferGeometry().setFromPoints(points2);
-    //   line = new THREE.Line(geometry, material);
-    //   line2 = new THREE.Line(geometry2, material);
-    //   const boxMaterial = new THREE.MeshStandardMaterial({ color: 0x0000ff, transparent: true, opacity: 0.5 });
-    //   const outerBox = new THREE.Mesh(
-    //     new THREE.BoxGeometry(Math.abs(squareMax.position.x - squareMin.position.x), Math.abs(squareMax.position.y - squareMin.position.y), Math.abs(squareMax.position.z - squareMin.position.z)),
-    //     boxMaterial
-    //   );
-    //   outerBox.position.set((squareMax.position.x + squareMin.position.x) / 2, (squareMax.position.y + squareMin.position.y) / 2, (squareMax.position.z + squareMin.position.z) / 2);
-    //   scene.add(outerBox);
-    //   camera.position.set((squareMax.position.x + squareMin.position.x) / 2, squareMin.position.y, (squareMax.position.z + squareMin.position.z) / 2);
-    //   camera.lookAt(new THREE.Vector3(camera.position.x - 0.5, camera.position.y, camera.position.z));
-    //   setTimeout(() => setModel(object.scene), 100);
-    //   // sem a latência ele não identifica o 1 ponto
-    // });
+    });
 
     const light2 = new THREE.PointLight(0xffffff, 0.45);
     light2.position.set(0, 3, 5);
@@ -181,8 +149,8 @@ function ThreeScene({ cameraStatus }) {
     let lastAngle = null;
     let allLines = [];
 
-    const raycasterFar = 0.1;
-    const angleOpening = 5;
+    const raycasterFar = 0.15;
+    const angleOpening = 10;
     function resetValues() {
       first = true;
       console.log("deu pau");
@@ -208,7 +176,7 @@ function ThreeScene({ cameraStatus }) {
           const intersects = raycaster.intersectObjects(scene.children, true);
           if (intersects.length) {
             allPoints.push({
-              x: intersects[0].point.x*0.99,
+              x: intersects[0].point.x*0.995,
               y: intersects[0].point.y,
               z: intersects[0].point.z,
             });
