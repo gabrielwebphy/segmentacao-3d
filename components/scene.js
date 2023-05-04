@@ -100,7 +100,7 @@ function ThreeScene({ cameraStatus }) {
 
     const loader = new GLTFLoader();
     // foi necessário remover as vigas
-    loader.load("./textures/teste.glb", (object) => {
+    loader.load("./textures/output.glb", (object) => {
       scene.add(object.scene);
       const boundingBox = new THREE.Box3().setFromObject(object.scene);
       console.log(boundingBox);
@@ -151,6 +151,7 @@ function ThreeScene({ cameraStatus }) {
 
     const raycasterFar = 0.15;
     const angleOpening = 10;
+    let zeroThickness = false
     function resetValues() {
       first = true;
       console.log("deu pau");
@@ -175,8 +176,9 @@ function ThreeScene({ cameraStatus }) {
           raycaster.far = 1000;
           const intersects = raycaster.intersectObjects(scene.children, true);
           if (intersects.length) {
+            console.log(zeroThickness);
             allPoints.push({
-              x: intersects[0].point.x*0.995, // É necessário para paredes com espessura zero (só funciona no GLB -> Testado várias vezes)
+              x: zeroThickness ? intersects[0].point.x*0.995 : intersects[0].point.x, // É necessário para paredes com espessura zero (só funciona no GLB, IFC aparentemente não)
               y: intersects[0].point.y,
               z: intersects[0].point.z,
             });
@@ -210,6 +212,9 @@ function ThreeScene({ cameraStatus }) {
             y: point.y,
             z: point.z + Math.cos((angle * Math.PI) / 180) * raycasterFar,
           });
+          if(hitAngles.length === 360/angleOpening){
+            zeroThickness = true
+          }
           if (!hitAngles[0] || ((lastAngleRef + 180) % 360 === angle && lastAngleRef !== null)) {
             resetValues();
           }
