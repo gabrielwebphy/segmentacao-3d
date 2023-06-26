@@ -100,7 +100,7 @@ function ThreeScene({ cameraStatus }) {
 
     const loader = new GLTFLoader();
     // foi necessário remover as vigas
-    loader.load("./textures/apart_06.glb", (object) => {
+    loader.load("./textures/1309Clean.glb", (object) => {
       scene.add(object.scene);
       const boundingBox = new THREE.Box3().setFromObject(object.scene);
       console.log(boundingBox);
@@ -127,9 +127,10 @@ function ThreeScene({ cameraStatus }) {
       outerBox.position.set((squareMax.position.x + squareMin.position.x) / 2, (squareMax.position.y + squareMin.position.y) / 2, (squareMax.position.z + squareMin.position.z) / 2);
       scene.add(outerBox);
       camera.position.set((squareMax.position.x + squareMin.position.x) / 2, squareMin.position.y+height/15, (squareMax.position.z + squareMin.position.z) / 2);
-      camera.lookAt(new THREE.Vector3(camera.position.x - 0.5, camera.position.y, camera.position.z));
+      camera.lookAt(new THREE.Vector3(camera.position.x, camera.position.y, camera.position.z-0.5));
       setTimeout(() => setModel(object.scene), 100);
       // sem a latência ele não identifica o 1 ponto
+      // todo: botar a câmera em todas as direções e verificar aquela com menos quadrados?
     });
 
     const light2 = new THREE.PointLight(0xffffff, 0.45);
@@ -150,7 +151,7 @@ function ThreeScene({ cameraStatus }) {
     let allLines = [];
 
     const raycasterFar = 0.15;
-    const angleOpening = 10;
+    const angleOpening = 15;
     let zeroThickness = false
     function resetValues() {
       first = true;
