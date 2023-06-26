@@ -109,8 +109,8 @@ function ThreeScene({ cameraStatus }) {
       squareMax = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshStandardMaterial({ color: 0xff00ff }));
       squareMax.position.set(boundingBox.max.x, boundingBox.max.y, boundingBox.max.z);
       const height = squareMax.position.y - squareMin.position.y
-      const nRows = Math.abs(Math.floor(squareMax.position.z - squareMin.position.z) * 2);
-      const nCols = Math.abs(Math.floor(squareMax.position.x - squareMin.position.x) * 2);
+      const nRows = Math.abs(Math.floor(squareMax.position.z - squareMin.position.z) / 0.125); // tamanho do quadrado
+      const nCols = Math.abs(Math.floor(squareMax.position.x - squareMin.position.x) / 0.125); // tamanho do quadrado
       setGrid({ rows: nRows, cols: nCols });
       const material = new THREE.LineBasicMaterial({ color: 0x00ff00 });
       const points = [new THREE.Vector3(boundingBox.max.x, -10, boundingBox.max.z), new THREE.Vector3(boundingBox.max.x, 10, boundingBox.max.z)];
@@ -126,11 +126,11 @@ function ThreeScene({ cameraStatus }) {
       );
       outerBox.position.set((squareMax.position.x + squareMin.position.x) / 2, (squareMax.position.y + squareMin.position.y) / 2, (squareMax.position.z + squareMin.position.z) / 2);
       scene.add(outerBox);
-      camera.position.set((squareMax.position.x + squareMin.position.x) / 2, squareMin.position.y+height/15, (squareMax.position.z + squareMin.position.z) / 2);
+      camera.position.set((squareMax.position.x + squareMin.position.x) / 2, squareMin.position.y, (squareMax.position.z + squareMin.position.z) / 2);
       camera.lookAt(new THREE.Vector3(camera.position.x, camera.position.y, camera.position.z-0.5));
       setTimeout(() => setModel(object.scene), 100);
       // sem a latência ele não identifica o 1 ponto
-      // todo: botar a câmera em todas as direções e verificar aquela com menos quadrados?
+      // todo: verificar todas as direções?
     });
 
     const light2 = new THREE.PointLight(0xffffff, 0.45);
@@ -160,7 +160,7 @@ function ThreeScene({ cameraStatus }) {
       lastAngle = null;
       allLines = [];
       camera.position.y += 0.05;
-      camera.lookAt(new THREE.Vector3(camera.position.x - 0.5, camera.position.y, camera.position.z));
+      camera.lookAt(new THREE.Vector3(camera.position.x, camera.position.y, camera.position.z-0.5));
     }
 
     function distance(point1, point2) {
