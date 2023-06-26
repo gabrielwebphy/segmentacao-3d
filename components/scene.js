@@ -130,7 +130,7 @@ function ThreeScene({ cameraStatus }) {
       camera.lookAt(new THREE.Vector3(camera.position.x, camera.position.y, camera.position.z-0.5));
       setTimeout(() => setModel(object.scene), 100);
       // sem a latência ele não identifica o 1 ponto
-      // todo: verificar todas as direções?
+      // todo: verificar todas as direções? checar aquela com menos quadrados? usar quadrados como hitboxes e reformular o algoritmo (similar à djikstra)? 
     });
 
     const light2 = new THREE.PointLight(0xffffff, 0.45);
